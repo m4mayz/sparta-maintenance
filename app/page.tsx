@@ -1,5 +1,52 @@
-import { ComponentExample } from "@/components/component-example";
+import { Button } from "@/components/ui/button";
+import { BookOpen, LogIn, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
 export default function Page() {
-return <ComponentExample />;
+    return (
+        <div className="min-h-screen bg-background flex flex-col">
+            <Header variant="default" />
+
+            {/* Hero Section */}
+            <section className="container mx-auto px-4 py-12 md:py-20 flex-1 flex items-center">
+                <div className="max-w-3xl mx-auto text-center space-y-6">
+                    <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                        Kelola Maintenance Store dengan{" "}
+                        <span className="text-primary">Lebih Efisien</span>
+                    </h2>
+
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                        Sistem terpusat untuk pelaporan kerusakan, monitoring
+                        perbaikan, dan pengelolaan SPJ maintenance di seluruh
+                        store.
+                    </p>
+
+                    {/* CTA Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+                        <Button asChild size="lg" className="text-base">
+                            <Link href="/login">
+                                <LogIn className="mr-2 h-5 w-5" />
+                                Login
+                            </Link>
+                        </Button>
+                        <Button
+                            asChild
+                            variant="outline"
+                            size="lg"
+                            className="text-base"
+                        >
+                            <Link href="/user-manual">
+                                <BookOpen className="mr-2 h-5 w-5" />
+                                User Manual
+                            </Link>
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
+            <Footer />
+        </div>
+    );
 }
