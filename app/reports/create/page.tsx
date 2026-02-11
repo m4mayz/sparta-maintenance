@@ -49,7 +49,15 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { Upload, X, Camera, MapPin, Tag, DollarSign } from "lucide-react";
+import {
+    Upload,
+    X,
+    Camera,
+    MapPin,
+    Tag,
+    DollarSign,
+    Store,
+} from "lucide-react";
 
 // Validasi schema dengan Zod
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -190,13 +198,6 @@ export default function CreateReportPage() {
             />
 
             <main className="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-2xl">
-                {/* Info Badge */}
-                <div className="mb-4">
-                    <Badge variant="outline" className="text-xs">
-                        Maintenance Support
-                    </Badge>
-                </div>
-
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
@@ -204,51 +205,33 @@ export default function CreateReportPage() {
                     >
                         {/* Toko */}
                         <Card>
-                            <CardHeader className="p-4 pb-3">
+                            <CardHeader>
                                 <CardTitle className="text-base flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-primary" />
+                                    <Store className="h-4 w-4 text-primary" />
                                     Informasi Toko
                                 </CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4 pt-0 space-y-3">
+                            <CardContent>
                                 <FormField
                                     control={form.control}
                                     name="store"
                                     render={({ field }) => (
-                                        <FormItem>
+                                        <FormItem className="space-y-4">
                                             <FormLabel>
                                                 Nama Toko{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
                                             </FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Pilih toko" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="store1">
-                                                        Alfamart Sudirman
-                                                    </SelectItem>
-                                                    <SelectItem value="store2">
-                                                        Alfamart Gatot Subroto
-                                                    </SelectItem>
-                                                    <SelectItem value="store3">
-                                                        Alfamart Thamrin
-                                                    </SelectItem>
-                                                    <SelectItem value="store4">
-                                                        Alfamart Kuningan
-                                                    </SelectItem>
-                                                    <SelectItem value="store5">
-                                                        Alfamart Casablanca
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                            <Input {...field}></Input>
+                                            <FormMessage />
+                                            <FormLabel>
+                                                Alamat{" "}
+                                                <span className="text-red-500">
+                                                    *
+                                                </span>
+                                            </FormLabel>
+                                            <Input {...field}></Input>
                                             <FormMessage />
                                         </FormItem>
                                     )}
