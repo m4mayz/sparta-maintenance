@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { BookOpen, LogIn, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
@@ -12,20 +13,23 @@ export default function Page() {
             {/* Hero Section */}
             <section className="container mx-auto px-4 py-12 md:py-20 flex-1 flex items-center">
                 <div className="max-w-3xl mx-auto text-center space-y-6">
-                    <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                    <h2 className="text-4xl md:text-6xl font-bold text-foreground tracking-tight">
                         Kelola Maintenance Store dengan{" "}
                         <span className="text-primary">Lebih Efisien</span>
                     </h2>
 
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                         Sistem terpusat untuk pelaporan kerusakan, monitoring
                         perbaikan, dan pengelolaan SPJ maintenance di seluruh
                         store.
                     </p>
 
                     {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-                        <Button asChild size="lg" className="text-base">
+                    <ButtonGroup
+                        className="w-full max-w-md mx-auto pt-6"
+                        orientation="horizontal"
+                    >
+                        <Button asChild size="lg" className="text-base flex-1">
                             <Link href="/login">
                                 <LogIn className="mr-2 h-5 w-5" />
                                 Login
@@ -35,14 +39,14 @@ export default function Page() {
                             asChild
                             variant="outline"
                             size="lg"
-                            className="text-base"
+                            className="text-base flex-1"
                         >
                             <Link href="/user-manual">
                                 <BookOpen className="mr-2 h-5 w-5" />
                                 User Manual
                             </Link>
                         </Button>
-                    </div>
+                    </ButtonGroup>
                 </div>
             </section>
 

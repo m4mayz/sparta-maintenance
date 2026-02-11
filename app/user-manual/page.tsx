@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import {
     Card,
     CardContent,
@@ -448,14 +449,22 @@ export default function UserManualPage() {
                                 Login sekarang dan mulai kelola maintenance
                                 store Anda
                             </p>
-                            <div className="flex gap-4 justify-center">
-                                <Button asChild size="lg">
+                            <ButtonGroup
+                                className="w-full max-w-sm mx-auto"
+                                orientation="horizontal"
+                            >
+                                <Button asChild size="lg" className="flex-1">
                                     <Link href="/login">Login Sekarang</Link>
                                 </Button>
-                                <Button variant="outline" size="lg" asChild>
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="flex-1"
+                                    asChild
+                                >
                                     <Link href="/">Kembali ke Home</Link>
                                 </Button>
-                            </div>
+                            </ButtonGroup>
                         </CardContent>
                     </Card>
                 </div>

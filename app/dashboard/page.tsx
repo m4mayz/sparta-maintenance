@@ -25,8 +25,10 @@ import {
     TrendingUp,
     CheckCheck,
     AlertTriangle,
+    LogOut,
 } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 // 🔧 DEVELOPMENT: Set role user untuk testing
 // Role options: "MS" | "COS" | "COORDINATOR" | "ADMIN" | "MANAGER"
@@ -248,22 +250,33 @@ export default function DashboardPage() {
                 backHref="/"
             />
 
-            <main className="flex-1 container mx-auto px-4 py-4 md:py-6">
+            <main className="flex-1 container mx-auto px-4 md:px-20 py-4 md:py-6">
                 {/* User Info */}
                 <div className="mb-4">
                     <div className="flex flex-grid items-center sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <Badge
                             variant="default"
-                            className="text-xs px-2.5 py-0.5 w-fit"
+                            className="text-xs md:text-base px-2.5 md:px-5 py-0.5 md:py-3.5 w-fit"
                         >
-                            NAMA
+                            NAMA USER
                         </Badge>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs md:text-base text-muted-foreground">
                             NAMA CABANG
                         </p>
+                        <Button
+                            asChild
+                            variant="default"
+                            size="sm"
+                            className="ml-auto"
+                        >
+                            <Link href="/login">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                Logout
+                            </Link>
+                        </Button>
                     </div>
                 </div>
-                <h2 className="text-base md:text-lg font-bold text-foreground mb-3">
+                <h2 className="text-base md:text-xl font-bold text-foreground mb-3">
                     Laporan
                 </h2>
                 {/* Quick Stats */}
@@ -274,7 +287,7 @@ export default function DashboardPage() {
                                 <p className="text-2xl md:text-3xl font-bold text-foreground">
                                     0
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs md:text-base text-muted-foreground">
                                     Total
                                 </p>
                             </div>
@@ -286,7 +299,7 @@ export default function DashboardPage() {
                                 <p className="text-2xl md:text-3xl font-bold text-yellow-600">
                                     0
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs md:text-base text-muted-foreground">
                                     Progress
                                 </p>
                             </div>
@@ -298,7 +311,7 @@ export default function DashboardPage() {
                                 <p className="text-2xl md:text-3xl font-bold text-green-600">
                                     0
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs md:text-base text-muted-foreground">
                                     Selesai
                                 </p>
                             </div>
@@ -310,7 +323,7 @@ export default function DashboardPage() {
                                 <p className="text-2xl md:text-3xl font-bold text-red-600">
                                     0
                                 </p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs md:text-base text-muted-foreground">
                                     Review
                                 </p>
                             </div>
@@ -320,7 +333,7 @@ export default function DashboardPage() {
 
                 {/* Menu Grid */}
                 <div className="mb-6">
-                    <h2 className="text-base md:text-lg font-bold text-foreground mb-3">
+                    <h2 className="text-base md:text-xl font-bold text-foreground mb-3">
                         Menu Utama
                     </h2>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -353,7 +366,7 @@ export default function DashboardPage() {
                                             <div className="space-y-1">
                                                 <h3
                                                     className={`
-                                                    text-sm font-semibold leading-tight
+                                                    text-sm md:text-xl font-semibold leading-tight
                                                     ${isDefault ? "text-white" : "text-foreground"}
                                                 `}
                                                 >
@@ -361,7 +374,7 @@ export default function DashboardPage() {
                                                 </h3>
                                                 <p
                                                     className={`
-                                                    text-xs leading-tight line-clamp-2 hidden md:block
+                                                    text-xs md:text-sm leading-tight line-clamp-2 hidden md:block
                                                     ${isDefault ? "text-white/80" : "text-muted-foreground"}
                                                 `}
                                                 >
