@@ -117,32 +117,32 @@ export const checklistCategories: ChecklistCategory[] = [
             { id: "H5", name: "Lisplank" },
         ],
     },
-    {
-        id: "I",
-        title: "I. Preventif Equipment Toko",
-        items: [
-            {
-                id: "I1",
-                name: "Folding Gate (Pemberian pelumas pada masing-masing pertemuan besi/silangan dan roda/rel)",
-            },
-            { id: "I2", name: "AC (Pembersihan filter secara berkala)" },
-            {
-                id: "I3",
-                name: "Dispenser (Pembersihan dispenser secara berkala)",
-            },
-            {
-                id: "I4",
-                name: "Kipas Angin (Pembersihan dan pelumasan kipas secara berkala)",
-            },
-            { id: "I5", name: "Kulkas (Pembersihan kulkas secara berkala)" },
-            {
-                id: "I6",
-                name: "MCB/ Breaker Listrik (Pengecekan kondisi MCB secara berkala)",
-            },
-            {
-                id: "I7",
-                name: "CCTV (Pengecekan dan pembersihan lensa kamera secara berkala)",
-            },
-        ],
-    },
+    // {
+    //     id: "I",
+    //     title: "I. Preventif Equipment Toko",
+    //     items: [
+    //         {
+    //             id: "I1",
+    //             name: "Folding Gate (Pemberian pelumas pada masing-masing pertemuan besi/silangan dan roda/rel)",
+    //         },
+    //         { id: "I2", name: "AC (Pembersihan filter secara berkala)" },
+    //         {
+    //             id: "I3",
+    //             name: "Dispenser (Pembersihan dispenser secara berkala)",
+    //         },
+    //         {
+    //             id: "I4",
+    //             name: "Kipas Angin (Pembersihan dan pelumasan kipas secara berkala)",
+    //         },
+    //         { id: "I5", name: "Kulkas (Pembersihan kulkas secara berkala)" },
+    //         {
+    //             id: "I6",
+    //             name: "MCB/ Breaker Listrik (Pengecekan kondisi MCB secara berkala)",
+    //         },
+    //         {
+    //             id: "I7",
+    //             name: "CCTV (Pengecekan dan pembersihan lensa kamera secara berkala)",
+    //         },
+    //     ],
+    // },
 ];
