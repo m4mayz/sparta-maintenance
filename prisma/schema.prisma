@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url dan directUrl sudah dipindahkan ke prisma.config.ts
+}
+
+// =========================================
+// ENUMS (Pilihan Data Tetap)
+// =========================================
+
+enum UserRole {
+  BMS   // Pemohon / Teknisi
+  BMC   // Approver / Supervisor
+  ADMIN // Administrator Sistem
+}
+
+enum ReportStatus {
+  DRAFT               // Sedang diisi BMS
+  PENDING_APPROVAL    // Sudah dikirim, menunggu BMC
+  APPROVED            // Disetujui BMC (OK)
+  REJECTED            // Ditolak/Revisi BMC (NOK)
+  COMPLETED           // Selesai sepenuhnya
+}
+
+enum ItemCondition {
+  BAIK
+  RUSAK
+  TIDAK_ADA
+}
+
+enum HandlerType {
+  BMS
+  REKANAN
+}
+
+// =========================================
+// MODELS (Tabel Data)
+// =========================================
+
+// Tabel Pengguna (Bisa disinkronkan dengan Supabase Auth)
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique // Digunakan sebagai User Login BMS
+  name          String
+  role          UserRole      @default(BMS)
+  branchName    String?       // Nama Cabang (untuk validasi password di flow lama)
+  
+  // Relasi
+  reports       Report[]      @relation("CreatedReports")
+  approvals     ApprovalLog[] // Relasi ke log approval yang dilakukan
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Tabel Master Kategori (Contoh: A. Bagian Depan Bangunan)
+model MasterCategory {
+  id          String       @id @default(uuid())
+  title       String       // Judul Kategori
+  order       Int          // Untuk urutan tampilan
+  
+  // Relasi
+  items       MasterItem[]
+  
+  createdAt   DateTime     @default(now())
+}
+
+// Tabel Master Item (Contoh: Bahu Jalan, Teras Depan)
+model MasterItem {
+  id          String         @id @default(uuid())
+  categoryId  String
+  name        String         // Nama Item Ceklist
+  
+  // Relasi
+  category    MasterCategory @relation(fields: [categoryId], references: [id])
+  reports     ReportItem[]   // Relasi ke tabel transaksi
+}
+
+// Tabel Laporan Utama (Header)
+model Report {
+  id            String        @id @default(uuid())
+  
+  // Informasi Header (Dari Input Data Awal)
+  ticketNumber  String        @unique // Generate otomatis (misal: RPT-20240212-001)
+  branchCode    String        // Kode Toko (HURUF BESAR)
+  branchName    String        // Nama Toko (HURUF BESAR)
+  contactNumber String        // No HP BMS
+  
+  // Status & Keuangan
+  status        ReportStatus  @default(DRAFT)
+  totalEstimation Decimal     @default(0) @db.Decimal(15, 2) // Total Estimasi Material (Rp)
+  
+  // Metadata & Relasi User
+  createdById   String
+  createdBy     User          @relation("CreatedReports", fields: [createdById], references: [id])
+  
+  // Relasi ke Item & Log
+  items         ReportItem[]
+  logs          ApprovalLog[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Tabel Detail Ceklist (Transaksi per Item)
+model ReportItem {
+  id            String        @id @default(uuid())
+  reportId      String
+  masterItemId  String        
+  
+  // Hasil Ceklist
+  condition     ItemCondition
+  photoUrl      String?       // URL Foto dari Supabase Storage
+  handler       HandlerType?  // BMS atau Rekanan
+  
+  // Relasi
+  report        Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  masterItem    MasterItem    @relation(fields: [masterItemId], references: [id])
+  estimations   MaterialEstimation[] 
+
+  @@unique([reportId, masterItemId]) // Mencegah duplikasi item dalam satu laporan
+}
+
+// Tabel Estimasi Material (Jika kondisi Rusak)
+model MaterialEstimation {
+  id            String    @id @default(uuid())
+  reportItemId  String
+  
+  // Detail Material
+  itemName      String    // Nama Barang (Misal: Cat, Semen)
+  quantity      Int
+  unit          String    // Satuan (Kaleng, Zak, Pcs)
+  price         Decimal   @db.Decimal(15, 2) // Harga Satuan
+  totalPrice    Decimal   @db.Decimal(15, 2) // quantity * price
+  
+  // Relasi
+  reportItem    ReportItem @relation(fields: [reportItemId], references: [id], onDelete: Cascade)
+}
+
+// Tabel Riwayat Approval (Audit Trail)
+model ApprovalLog {
+  id            String    @id @default(uuid())
+  reportId      String
+  approverId    String    // User ID BMC
+  
+  status        ReportStatus // Status keputusan (APPROVED / REJECTED)
+  notes         String?      // Catatan Alasan NOK jika ditolak
+  
+  // Relasi
+  report        Report    @relation(fields: [reportId], references: [id])
+  approver      User      @relation(fields: [approverId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+}

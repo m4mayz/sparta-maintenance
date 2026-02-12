@@ -59,7 +59,6 @@ const MOCK_REPORTS = [
         id: "RPT-2024-001",
         store: "Alfamart Cikokol Raya",
         location: "Area Kasir",
-        damageType: "Electrical",
         description: "Lampu utama kedip-kedip dan mati nyala",
         status: "pending",
         date: "2024-02-10",
@@ -69,7 +68,6 @@ const MOCK_REPORTS = [
         id: "RPT-2024-002",
         store: "Alfamart Hasyim Ashari",
         location: "Gudang Belakang",
-        damageType: "Plumbing",
         description: "Pipa wastafel bocor membasahi lantai",
         status: "approved",
         date: "2024-02-09",
@@ -79,7 +77,6 @@ const MOCK_REPORTS = [
         id: "RPT-2024-003",
         store: "Alfamart Modernland",
         location: "Area Sales",
-        damageType: "AC",
         description: "AC tidak dingin, hanya keluar angin",
         status: "rejected",
         date: "2024-02-08",
@@ -89,7 +86,6 @@ const MOCK_REPORTS = [
         id: "RPT-2024-004",
         store: "Alfamart Sudirman",
         location: "Pintu Masuk",
-        damageType: "Building",
         description: "Engsel pintu kaca lepas",
         status: "pending",
         date: "2024-02-07",
@@ -243,19 +239,6 @@ export default function MyReportsPage() {
                                                 <span>{report.date}</span>
                                             </div>
                                         </div>
-
-                                        <div className="flex items-center justify-between pt-3 border-t mt-3">
-                                            <Badge
-                                                variant="outline"
-                                                className="capitalize font-normal text-xs bg-muted/50"
-                                            >
-                                                {report.damageType}
-                                            </Badge>
-                                            <div className="flex items-center text-xs text-primary font-medium group">
-                                                Detail
-                                                <ChevronRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
-                                            </div>
-                                        </div>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -272,7 +255,6 @@ export default function MyReportsPage() {
                                         <TableHead className="min-w-[200px]">
                                             Toko & Lokasi
                                         </TableHead>
-                                        <TableHead>Kategori</TableHead>
                                         <TableHead>
                                             <div className="flex items-center gap-1 cursor-pointer hover:text-foreground">
                                                 Tanggal{" "}
@@ -311,14 +293,6 @@ export default function MyReportsPage() {
                                                         {report.location}
                                                     </span>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant="outline"
-                                                    className="capitalize font-normal bg-muted/30"
-                                                >
-                                                    {report.damageType}
-                                                </Badge>
                                             </TableCell>
                                             <TableCell className="text-sm text-muted-foreground">
                                                 {report.date}

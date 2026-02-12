@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { useState, useEffect } from "react";
+import { useActionState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,58 +18,42 @@ import {
     InputGroupAddon,
 } from "@/components/ui/input-group";
 import { ButtonGroup } from "@/components/ui/button-group";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { loginAction, type LoginState } from "./action";
 
-// Validation schema dengan Zod
-const loginSchema = z.object({
-    email: z
-        .string()
-        .min(1, { message: "Email wajib diisi" })
-        .email({ message: "Format email tidak valid" }),
-    password: z
-        .string()
-        .min(6, { message: "Password minimal 6 karakter" })
-        .max(50, { message: "Password maksimal 50 karakter" }),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+const initialState: LoginState = {
+    errors: {},
+};
 
 export default function LoginPage() {
-    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [state, formAction, isPending] = useActionState(
+        loginAction,
+        initialState,
+    );
 
-    const form = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-        defaultValues: {
-            email: "",
-            password: "",
-        },
-    });
+    // Show error toast when form errors occur
+    useEffect(() => {
+        if (state.errors?.form) {
+            toast.error("Login Gagal", {
+                description: state.errors.form[0],
+            });
+        }
+    }, [state.errors]);
 
-    const onSubmit = (data: LoginFormValues) => {
-        // TODO: Handle authentication with backend
-        console.log("Login attempt:", { email: data.email });
+    // Handle password input - convert to uppercase
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setPassword(e.target.value.toUpperCase());
+    };
 
-        // Simulate login success
-        toast.success("Login berhasil!", {
-            description: "Selamat datang di Sparta Maintenance",
-        });
-
-        // Redirect to dashboard after short delay
-        setTimeout(() => {
-            router.push("/dashboard");
-        }, 1000);
+    // Handle email input
+    const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
     };
 
     return (
@@ -97,127 +78,122 @@ export default function LoginPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Form {...form}>
-                            <form
-                                className="space-y-4"
-                                onSubmit={form.handleSubmit(onSubmit)}
-                            >
-                                {/* Email */}
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Email</FormLabel>
-                                            <FormControl>
-                                                <InputGroup>
-                                                    <InputGroupInput
-                                                        type="email"
-                                                        placeholder="Masukkan email"
-                                                        {...field}
-                                                    />
-                                                    <InputGroupAddon align="inline-start">
-                                                        <Mail className="h-4 w-4" />
-                                                    </InputGroupAddon>
-                                                </InputGroup>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Password */}
-                                <FormField
-                                    control={form.control}
-                                    name="password"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Password</FormLabel>
-                                            <FormControl>
-                                                <InputGroup>
-                                                    <InputGroupAddon align="inline-start">
-                                                        <Lock className="h-4 w-4" />
-                                                    </InputGroupAddon>
-                                                    <InputGroupInput
-                                                        type={
-                                                            showPassword
-                                                                ? "text"
-                                                                : "password"
-                                                        }
-                                                        placeholder="Masukkan password"
-                                                        {...field}
-                                                        onChange={(e) => {
-                                                            const uppercased =
-                                                                e.target.value.toUpperCase();
-                                                            field.onChange(
-                                                                uppercased,
-                                                            );
-                                                        }}
-                                                    />
-                                                    <InputGroupButton
-                                                        size="icon-sm"
-                                                        onClick={() =>
-                                                            setShowPassword(
-                                                                !showPassword,
-                                                            )
-                                                        }
-                                                        aria-label={
-                                                            showPassword
-                                                                ? "Hide password"
-                                                                : "Show password"
-                                                        }
-                                                    >
-                                                        {showPassword ? (
-                                                            <EyeOff className="h-4 w-4" />
-                                                        ) : (
-                                                            <Eye className="h-4 w-4" />
-                                                        )}
-                                                    </InputGroupButton>
-                                                </InputGroup>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {/* Submit Button */}
-                                <ButtonGroup className="w-full mt-2">
-                                    <Button
-                                        type="submit"
-                                        className="flex-1"
-                                        size="lg"
-                                        disabled={form.formState.isSubmitting}
-                                    >
-                                        {form.formState.isSubmitting
-                                            ? "Memproses..."
-                                            : "Login"}
-                                    </Button>
-                                </ButtonGroup>
-
-                                {/* Divider */}
-                                <div className="relative my-4">
-                                    <div className="absolute inset-0 flex items-center">
-                                        <span className="w-full border-t" />
-                                    </div>
-                                    <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-card px-2 text-muted-foreground">
-                                            Butuh bantuan?
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* User Manual Link */}
-                                <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    asChild
+                        <form action={formAction} className="space-y-4">
+                            {/* Email */}
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="email"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                 >
-                                    <Link href="/user-manual">
-                                        Lihat User Manual
-                                    </Link>
+                                    Email
+                                </label>
+                                <InputGroup>
+                                    <InputGroupInput
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="Masukkan email"
+                                        value={email}
+                                        onChange={handleEmailChange}
+                                        required
+                                        disabled={isPending}
+                                    />
+                                    <InputGroupAddon align="inline-start">
+                                        <Mail className="h-4 w-4" />
+                                    </InputGroupAddon>
+                                </InputGroup>
+                                {state.errors?.email && (
+                                    <p className="text-sm font-medium text-destructive">
+                                        {state.errors.email[0]}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Password */}
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="password"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
+                                    Password
+                                </label>
+                                <InputGroup>
+                                    <InputGroupAddon align="inline-start">
+                                        <Lock className="h-4 w-4" />
+                                    </InputGroupAddon>
+                                    <InputGroupInput
+                                        id="password"
+                                        name="password"
+                                        type={
+                                            showPassword ? "text" : "password"
+                                        }
+                                        placeholder="Masukkan nama cabang"
+                                        value={password}
+                                        onChange={handlePasswordChange}
+                                        required
+                                        disabled={isPending}
+                                    />
+                                    <InputGroupButton
+                                        size="icon-sm"
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword(!showPassword)
+                                        }
+                                        aria-label={
+                                            showPassword
+                                                ? "Hide password"
+                                                : "Show password"
+                                        }
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </InputGroupButton>
+                                </InputGroup>
+                                {state.errors?.password && (
+                                    <p className="text-sm font-medium text-destructive">
+                                        {state.errors.password[0]}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Submit Button */}
+                            <ButtonGroup className="w-full mt-2">
+                                <Button
+                                    type="submit"
+                                    className="flex-1"
+                                    size="lg"
+                                    disabled={isPending}
+                                >
+                                    {isPending ? "Memproses..." : "Login"}
                                 </Button>
-                            </form>
-                        </Form>
+                            </ButtonGroup>
+
+                            {/* Divider */}
+                            <div className="relative my-4">
+                                <div className="absolute inset-0 flex items-center">
+                                    <span className="w-full border-t" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-card px-2 text-muted-foreground">
+                                        Butuh bantuan?
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* User Manual Link */}
+                            <Button
+                                variant="outline"
+                                className="w-full"
+                                asChild
+                            >
+                                <Link href="/user-manual">
+                                    Lihat User Manual
+                                </Link>
+                            </Button>
+                        </form>
                     </CardContent>
                 </Card>
             </div>

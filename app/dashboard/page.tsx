@@ -1,38 +1,35 @@
-"use client";
-
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
     FileText,
     ClipboardCheck,
-    ListChecks,
     FolderOpen,
-    BarChart3,
     Settings,
     Plus,
     CheckCircle2,
     Clock,
     AlertCircle,
-    LogOut,
     Activity,
     Store,
     Calendar,
     ArrowRight,
     FileClock,
-    ClipboardClock,
 } from "lucide-react";
 import Link from "next/link";
+import { requireAuth, getUserStats } from "@/lib/auth-helper";
+import { LogoutButton } from "./logout-button";
+import type { UserRole } from "@prisma/client";
 
-const ROLE_USER: "MS" | "COS" | "COORDINATOR" | "ADMIN" | "MANAGER" = "COORDINATOR";
+export default async function DashboardPage() {
+    const user = await requireAuth();
+    const stats = await getUserStats(user.id);
 
-export default function DashboardPage() {
-    const getMenuByRole = () => {
-        switch (ROLE_USER) {
-            case "MS":
+    const getMenuByRole = (role: UserRole) => {
+        switch (role) {
+            case "BMS":
                 return {
                     menus: [
                         {
@@ -61,43 +58,7 @@ export default function DashboardPage() {
                     ],
                 };
 
-            case "COS":
-                return {
-                    menus: [
-                        {
-                            title: "Laporan Toko",
-                            description:
-                                "Lihat laporan maintenance di toko Anda",
-                            icon: FileText,
-                            href: "/reports/store",
-                            variant: "default" as const,
-                        },
-                        {
-                            title: "Verifikasi Lapangan",
-                            description: "Cek dan verifikasi hasil perbaikan",
-                            icon: CheckCircle2,
-                            href: "/verification/field",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Menunggu Review",
-                            description: "Laporan yang menunggu persetujuan",
-                            icon: Clock,
-                            href: "/reports/pending",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Riwayat Verifikasi",
-                            description:
-                                "Riwayat verifikasi yang sudah dilakukan",
-                            icon: FolderOpen,
-                            href: "/verification/history",
-                            variant: "outline" as const,
-                        },
-                    ],
-                };
-
-            case "COORDINATOR":
+            case "BMC":
                 return {
                     menus: [
                         {
@@ -108,9 +69,9 @@ export default function DashboardPage() {
                             variant: "default" as const,
                         },
                         {
-                            title: "Riwayat Laporan",
-                            description: "Riwayat semua laporan maintenance",
-                            icon: ClipboardClock,
+                            title: "Riwayat Approval",
+                            description: "Riwayat laporan yang sudah diapprove",
+                            icon: FolderOpen,
                             href: "/approval/history",
                             variant: "outline" as const,
                         },
@@ -126,13 +87,6 @@ export default function DashboardPage() {
                             icon: ClipboardCheck,
                             href: "/admin/verification",
                             variant: "default" as const,
-                        },
-                        {
-                            title: "Generate SPJ",
-                            description: "Buat Surat Pertanggungjawaban",
-                            icon: FileText,
-                            href: "/admin/spj",
-                            variant: "outline" as const,
                         },
                         {
                             title: "Arsip Dokumen",
@@ -151,41 +105,6 @@ export default function DashboardPage() {
                     ],
                 };
 
-            case "MANAGER":
-                return {
-                    menus: [
-                        {
-                            title: "Approval SPJ",
-                            description: "Review dan approve SPJ",
-                            icon: CheckCircle2,
-                            href: "/manager/approval",
-                            variant: "default" as const,
-                        },
-                        {
-                            title: "Dashboard Overview",
-                            description: "Overview performance maintenance",
-                            icon: BarChart3,
-                            href: "/manager/overview",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Laporan Keuangan",
-                            description: "Laporan biaya maintenance",
-                            icon: FileText,
-                            href: "/manager/financial",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Riwayat Approval",
-                            description:
-                                "Riwayat approval yang sudah dilakukan",
-                            icon: FolderOpen,
-                            href: "/manager/history",
-                            variant: "outline" as const,
-                        },
-                    ],
-                };
-
             default:
                 return {
                     menus: [],
@@ -193,47 +112,43 @@ export default function DashboardPage() {
         }
     };
 
-    const { menus } = getMenuByRole();
+    const { menus } = getMenuByRole(user.role);
 
-    const getRoleName = () => {
-        switch (ROLE_USER) {
-            case "MS":
-                return "Maintenance Support";
-            case "COS":
-                return "COS / ACOS";
-            case "COORDINATOR":
-                return "Maintenance Coordinator";
+    const getRoleName = (role: UserRole) => {
+        switch (role) {
+            case "BMS":
+                return "Branch Maintenance Support";
+            case "BMC":
+                return "Branch Maintenance Coordinator";
             case "ADMIN":
-                return "Admin Building & Maintenance";
-            case "MANAGER":
-                return "Manager";
+                return "Atmin ganteng";
             default:
                 return "Unknown Role";
         }
     };
 
-    const stats = [
+    const dashboardStats = [
         {
             label: "Total Laporan",
-            value: "0",
+            value: stats.totalReports.toString(),
             icon: FileText,
             color: "text-primary",
         },
         {
-            label: "Menunggu approval",
-            value: "0",
+            label: "Menunggu",
+            value: stats.pendingReports.toString(),
             icon: Clock,
             color: "text-yellow-600",
         },
         {
-            label: "Laporan Selesai",
-            value: "0",
+            label: "Disetujui",
+            value: stats.approvedReports.toString(),
             icon: CheckCircle2,
             color: "text-green-600",
         },
         {
-            label: "Laporan Ditolak",
-            value: "0",
+            label: "Ditolak",
+            value: stats.rejectedReports.toString(),
             icon: AlertCircle,
             color: "text-red-600",
         },
@@ -253,16 +168,16 @@ export default function DashboardPage() {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-xl md:text-3xl font-bold tracking-tight text-foreground">
-                            Selamat Datang, User
+                            Selamat Datang, {user.name}
                         </h1>
                         <p className="text-xs md:text-sm text-muted-foreground mt-1 flex items-center gap-2">
                             <Store className="h-3 w-3 md:h-4 md:w-4" />
-                            NAMA CABANG (T001)
+                            {user.branchName || "No Branch"}
                             <span className="hidden md:inline text-muted-foreground/50">
                                 |
                             </span>
                             <span className="flex items-center gap-1.5 text-[10px] md:text-sm bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-                                {getRoleName()}
+                                {getRoleName(user.role)}
                             </span>
                         </p>
                     </div>
@@ -279,23 +194,13 @@ export default function DashboardPage() {
                                 day: "numeric",
                             })}
                         </Badge>
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            className="ml-auto md:ml-0"
-                            asChild
-                        >
-                            <Link href="/login">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                Logout
-                            </Link>
-                        </Button>
+                        <LogoutButton />
                     </div>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-4 gap-4">
-                    {stats.map((stat, i) => (
+                    {dashboardStats.map((stat, i) => (
                         <Card
                             key={i}
                             className="hover:shadow-md transition-shadow gap-2 py-3 md:py-6"
@@ -418,7 +323,7 @@ export default function DashboardPage() {
                                             akan muncul di sini.
                                         </p>
                                     </div>
-                                    {ROLE_USER === "MS" && (
+                                    {user.role === "BMS" && (
                                         <Button
                                             variant="outline"
                                             size="sm"
