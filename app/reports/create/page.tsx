@@ -39,15 +39,9 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import {
-    InputGroup,
-    InputGroupInput,
-    InputGroupAddon,
-} from "@/components/ui/input-group";
-import {
     Camera,
     ChevronDown,
     Store,
-    MapPin,
     CheckCircle2,
     AlertCircle,
     Trash2,
@@ -61,6 +55,12 @@ import {
     type ChecklistCondition,
     type ChecklistCategory,
 } from "@/lib/checklist-data";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 type BmsItemEntry = {
     id: string;
@@ -68,16 +68,45 @@ type BmsItemEntry = {
     categoryTitle: string;
     itemName: string;
     quantity: number;
+    unit: string;
     price: number;
     total: number;
 };
 
-type BmsCategoryGroup = {
-    categoryId: string;
-    categoryTitle: string;
+type BmsItemGroup = {
     checklistItem: ChecklistItem;
+    categoryTitle: string;
     entries: BmsItemEntry[];
 };
+
+// Dummy store data
+const dummyStores = [
+    {
+        id: "store-1",
+        name: "Toko Sumber Jaya",
+        address: "Jl. Merdeka No. 123, Kota Bandung, Jawa Barat 40123",
+    },
+    {
+        id: "store-2",
+        name: "Toko Maju Bersama",
+        address: "Jl. Sudirman No. 456, Jakarta Selatan, DKI Jakarta 12190",
+    },
+    {
+        id: "store-3",
+        name: "Toko Sejahtera",
+        address: "Jl. Ahmad Yani No. 789, Surabaya, Jawa Timur 60234",
+    },
+    {
+        id: "store-4",
+        name: "Toko Berkah Jaya",
+        address: "Jl. Gatot Subroto No. 321, Semarang, Jawa Tengah 50141",
+    },
+    {
+        id: "store-5",
+        name: "Toko Harapan Indah",
+        address: "Jl. Diponegoro No. 654, Yogyakarta, DIY Yogyakarta 55122",
+    },
+];
 
 export default function CreateReportPage() {
     const router = useRouter();
@@ -87,12 +116,21 @@ export default function CreateReportPage() {
     );
     const [store, setStore] = useState("");
     const [address, setAddress] = useState("");
+
+    // Handler untuk memilih toko dari dropdown
+    const handleStoreChange = (storeId: string) => {
+        const selectedStore = dummyStores.find((s) => s.id === storeId);
+        if (selectedStore) {
+            setStore(selectedStore.name);
+            setAddress(selectedStore.address);
+        }
+    };
     const [checklist, setChecklist] = useState<Map<string, ChecklistItem>>(
         new Map(),
     );
-    const [bmsCategories, setBmsCategories] = useState<
-        Map<string, BmsCategoryGroup>
-    >(new Map());
+    const [bmsItems, setBmsItems] = useState<Map<string, BmsItemGroup>>(
+        new Map(),
+    );
 
     // STATE UNTUK CAMERA MODAL
     const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -177,9 +215,11 @@ export default function CreateReportPage() {
 
     // DEVELOPMENT ONLY: Auto-fill semua field
     const autoFillForDevelopment = async () => {
-        // Fill store info
-        setStore("Toko Sumber Jaya");
-        setAddress("Jl. Merdeka No. 123, Kota Bandung, Jawa Barat 40123");
+        // Fill store info - random store
+        const randomStore =
+            dummyStores[Math.floor(Math.random() * dummyStores.length)];
+        setStore(randomStore.name);
+        setAddress(randomStore.address);
 
         // Open all categories
         const allCategoryIds = checklistCategories.map((cat) => cat.id);
@@ -270,7 +310,7 @@ export default function CreateReportPage() {
                 // If rusak, add handler
                 if (condition === "rusak") {
                     checklistItem.handler =
-                        itemIndex % 2 === 0 ? "BMS" : "Kontraktor";
+                        itemIndex % 2 === 0 ? "BMS" : "Rekanan";
                 }
 
                 newChecklist.set(item.id, checklistItem);
@@ -279,8 +319,8 @@ export default function CreateReportPage() {
 
         setChecklist(newChecklist);
 
-        // Auto-populate BMS categories with sample entries (for step 2)
-        const bmsCats = new Map<string, BmsCategoryGroup>();
+        // Auto-populate BMS items with sample entries (for step 2)
+        const bmsMap = new Map<string, BmsItemGroup>();
         for (const [id, item] of newChecklist) {
             if (item.condition === "rusak" && item.handler === "BMS") {
                 let categoryData: ChecklistCategory | undefined;
@@ -292,37 +332,33 @@ export default function CreateReportPage() {
                 }
 
                 if (categoryData) {
-                    const categoryId = categoryData.id;
-
-                    if (!bmsCats.has(categoryId)) {
-                        bmsCats.set(categoryId, {
-                            categoryId: categoryData.id,
-                            categoryTitle: categoryData.title,
-                            checklistItem: item,
-                            entries: [],
-                        });
-                    }
-
-                    // Add 2 sample entries per category
-                    const cat = bmsCats.get(categoryId)!;
+                    // Add 2 sample entries per damaged item
+                    const entries: BmsItemEntry[] = [];
                     for (let i = 1; i <= 2; i++) {
-                        cat.entries.push({
-                            id: `entry_${categoryId}_${i}_${Date.now()}`,
+                        entries.push({
+                            id: `entry_${id}_${i}_${Date.now()}`,
                             categoryId: categoryData.id,
                             categoryTitle: categoryData.title,
                             itemName: `Barang Contoh ${i}`,
                             quantity: Math.floor(Math.random() * 10) + 1,
+                            unit: "pcs",
                             price: (Math.floor(Math.random() * 10) + 1) * 50000,
                             total: 0,
                         });
                         // Calculate total
-                        const lastEntry = cat.entries[cat.entries.length - 1];
+                        const lastEntry = entries[entries.length - 1];
                         lastEntry.total = lastEntry.quantity * lastEntry.price;
                     }
+
+                    bmsMap.set(id, {
+                        checklistItem: item,
+                        categoryTitle: categoryData.title,
+                        entries: entries,
+                    });
                 }
             }
         }
-        setBmsCategories(bmsCats);
+        setBmsItems(bmsMap);
 
         toast.success("Form berhasil diisi otomatis!");
     };
@@ -377,8 +413,8 @@ export default function CreateReportPage() {
     const handleNextStep = () => {
         if (!validateStep1()) return;
 
-        // Group BMS items by category
-        const categoryGroups = new Map<string, BmsCategoryGroup>();
+        // Create BMS items map (each damaged item gets its own entry)
+        const bmsMap = new Map<string, BmsItemGroup>();
 
         for (const [id, item] of checklist) {
             if (item.condition === "rusak" && item.handler === "BMS") {
@@ -392,114 +428,110 @@ export default function CreateReportPage() {
                 }
 
                 if (categoryData) {
-                    const categoryId = categoryData.id;
-
-                    if (!categoryGroups.has(categoryId)) {
-                        categoryGroups.set(categoryId, {
-                            categoryId: categoryData.id,
-                            categoryTitle: categoryData.title,
-                            checklistItem: item,
-                            entries: [],
-                        });
-                    }
+                    bmsMap.set(id, {
+                        checklistItem: item,
+                        categoryTitle: categoryData.title,
+                        entries: [],
+                    });
                 }
             }
         }
 
-        setBmsCategories(categoryGroups);
+        setBmsItems(bmsMap);
         setStep(2);
         window.scrollTo(0, 0);
     };
 
-    const addBmsEntry = (categoryId: string) => {
-        setBmsCategories((prev) => {
+    const addBmsEntry = (itemId: string) => {
+        setBmsItems((prev) => {
             const next = new Map(prev);
-            const category = next.get(categoryId);
-            if (category) {
+            const itemGroup = next.get(itemId);
+            if (itemGroup) {
                 const newEntry: BmsItemEntry = {
                     id: `entry_${Date.now()}_${Math.random()}`,
-                    categoryId: category.categoryId,
-                    categoryTitle: category.categoryTitle,
+                    categoryId: "",
+                    categoryTitle: itemGroup.categoryTitle,
                     itemName: "",
                     quantity: 0,
+                    unit: "",
                     price: 0,
                     total: 0,
                 };
                 // Create new array instead of mutating
-                const updatedCategory = {
-                    ...category,
-                    entries: [...category.entries, newEntry],
+                const updatedItemGroup = {
+                    ...itemGroup,
+                    entries: [...itemGroup.entries, newEntry],
                 };
-                next.set(categoryId, updatedCategory);
+                next.set(itemId, updatedItemGroup);
             }
             return next;
         });
     };
 
     const updateBmsEntry = (
-        categoryId: string,
+        itemId: string,
         entryId: string,
-        field: "itemName" | "quantity" | "price",
+        field: "itemName" | "quantity" | "unit" | "price",
         value: string | number,
     ) => {
-        setBmsCategories((prev) => {
+        setBmsItems((prev) => {
             const next = new Map(prev);
-            const category = next.get(categoryId);
-            if (category) {
-                const entryIndex = category.entries.findIndex(
+            const itemGroup = next.get(itemId);
+            if (itemGroup) {
+                const entryIndex = itemGroup.entries.findIndex(
                     (e) => e.id === entryId,
                 );
                 if (entryIndex !== -1) {
                     const updated = {
-                        ...category.entries[entryIndex],
+                        ...itemGroup.entries[entryIndex],
                         [field]: value,
                     };
                     if (field === "quantity" || field === "price") {
                         updated.total = updated.quantity * updated.price;
                     }
                     // Create new array with updated entry
-                    const updatedEntries = [...category.entries];
+                    const updatedEntries = [...itemGroup.entries];
                     updatedEntries[entryIndex] = updated;
-                    const updatedCategory = {
-                        ...category,
+                    const updatedItemGroup = {
+                        ...itemGroup,
                         entries: updatedEntries,
                     };
-                    next.set(categoryId, updatedCategory);
+                    next.set(itemId, updatedItemGroup);
                 }
             }
             return next;
         });
     };
 
-    const removeBmsEntry = (categoryId: string, entryId: string) => {
-        setBmsCategories((prev) => {
+    const removeBmsEntry = (itemId: string, entryId: string) => {
+        setBmsItems((prev) => {
             const next = new Map(prev);
-            const category = next.get(categoryId);
-            if (category) {
+            const itemGroup = next.get(itemId);
+            if (itemGroup) {
                 // Create new array without the removed entry
-                const updatedCategory = {
-                    ...category,
-                    entries: category.entries.filter((e) => e.id !== entryId),
+                const updatedItemGroup = {
+                    ...itemGroup,
+                    entries: itemGroup.entries.filter((e) => e.id !== entryId),
                 };
-                next.set(categoryId, updatedCategory);
+                next.set(itemId, updatedItemGroup);
             }
             return next;
         });
     };
 
     const validateStep2 = (): boolean => {
-        for (const category of bmsCategories.values()) {
-            if (category.entries.length === 0) {
+        for (const itemGroup of bmsItems.values()) {
+            if (itemGroup.entries.length === 0) {
                 toast.error(
-                    `Kategori "${category.categoryTitle}" harus memiliki minimal 1 barang`,
+                    `Item "${itemGroup.checklistItem.name}" harus memiliki minimal 1 barang`,
                 );
                 return false;
             }
 
-            for (const entry of category.entries) {
+            for (const entry of itemGroup.entries) {
                 if (!entry.itemName.trim()) {
                     toast.error(
-                        `Nama item di kategori "${category.categoryTitle}" wajib diisi`,
+                        `Nama barang untuk "${itemGroup.checklistItem.name}" wajib diisi`,
                     );
                     return false;
                 }
@@ -528,11 +560,10 @@ export default function CreateReportPage() {
     const rusakItems = Array.from(checklist.values()).filter(
         (i) => i.condition === "rusak",
     );
-    const kontraktorItems = rusakItems.filter(
-        (i) => i.handler === "Kontraktor",
-    );
-    const grandTotalBms = Array.from(bmsCategories.values()).reduce(
-        (sum, cat) => sum + cat.entries.reduce((s, e) => s + e.total, 0),
+    const bmsItemsList = rusakItems.filter((i) => i.handler === "BMS");
+    const rekananItems = rusakItems.filter((i) => i.handler === "Rekanan");
+    const grandTotalBms = Array.from(bmsItems.values()).reduce(
+        (sum, item) => sum + item.entries.reduce((s, e) => s + e.total, 0),
         0,
     );
 
@@ -578,7 +609,7 @@ export default function CreateReportPage() {
                 </div>
             )}
 
-            <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-6xl">
+            <main className="flex-1 container mx-auto px-4 py-4 md:py-8 max-w-7xl">
                 {/* ... (Bagian Progress Bar dan Header sama seperti sebelumnya) ... */}
                 <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
                     {/* ... Progress Bar Code (tidak berubah) ... */}
@@ -636,47 +667,48 @@ export default function CreateReportPage() {
                                     <CardContent className="space-y-4">
                                         <div>
                                             <Label htmlFor="store">
-                                                Nama Toko{" "}
+                                                Pilih Toko{" "}
                                                 <span className="text-red-500">
                                                     *
                                                 </span>
                                             </Label>
-                                            <InputGroup className="mt-2">
-                                                <InputGroupAddon>
-                                                    <Store className="h-4 w-4" />
-                                                </InputGroupAddon>
-                                                <InputGroupInput
-                                                    id="store"
-                                                    placeholder="Nama toko"
-                                                    value={store}
-                                                    onChange={(e) =>
-                                                        setStore(e.target.value)
-                                                    }
-                                                />
-                                            </InputGroup>
+                                            <Select
+                                                onValueChange={
+                                                    handleStoreChange
+                                                }
+                                                value={
+                                                    dummyStores.find(
+                                                        (s) => s.name === store,
+                                                    )?.id || ""
+                                                }
+                                            >
+                                                <SelectTrigger className="mt-2 w-full">
+                                                    <SelectValue placeholder="Pilih toko..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {dummyStores.map((s) => (
+                                                        <SelectItem
+                                                            key={s.id}
+                                                            value={s.id}
+                                                        >
+                                                            {s.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div>
                                             <Label htmlFor="address">
                                                 Alamat{" "}
-                                                <span className="text-red-500">
-                                                    *
-                                                </span>
                                             </Label>
-                                            <InputGroup className="mt-2">
-                                                <InputGroupAddon>
-                                                    <MapPin className="h-4 w-4" />
-                                                </InputGroupAddon>
-                                                <InputGroupInput
-                                                    id="address"
-                                                    placeholder="Alamat lengkap"
-                                                    value={address}
-                                                    onChange={(e) =>
-                                                        setAddress(
-                                                            e.target.value,
-                                                        )
-                                                    }
-                                                />
-                                            </InputGroup>
+                                            <div className="mt-2 p-3 bg-muted rounded-md border text-sm">
+                                                {address || (
+                                                    <span className="text-muted-foreground">
+                                                        Pilih toko untuk melihat
+                                                        alamat
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>
@@ -1066,8 +1098,8 @@ export default function CreateReportPage() {
                                                                                             <SelectItem value="BMS">
                                                                                                 BMS
                                                                                             </SelectItem>
-                                                                                            <SelectItem value="Kontraktor">
-                                                                                                Kontraktor
+                                                                                            <SelectItem value="Rekanan">
+                                                                                                Rekanan
                                                                                             </SelectItem>
                                                                                         </SelectContent>
                                                                                     </Select>
@@ -1150,15 +1182,16 @@ export default function CreateReportPage() {
                             </div>
                         </div>
                         <div className="md:col-span-8 md:order-2 space-y-6">
-                            {bmsCategories.size > 0 && (
+                            {bmsItems.size > 0 && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
-                                            Estimasi Harga BMS
+                                            Estimasi Harga BMS (
+                                            {bmsItemsList.length} item)
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Tambahkan barang untuk setiap
-                                            kategori
+                                            Tambahkan barang untuk setiap item
+                                            rusak
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
@@ -1166,57 +1199,71 @@ export default function CreateReportPage() {
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow className="bg-muted/30">
-                                                        <TableHead className="w-12">
+                                                        <TableHead className="min-w-8">
                                                             No
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="min-w-60">
                                                             Item
                                                         </TableHead>
-                                                        <TableHead className="w-24">
-                                                            Qty
+                                                        <TableHead className="min-w-16">
+                                                            Jml
                                                         </TableHead>
-                                                        <TableHead className="w-32">
+                                                        <TableHead className="min-w-32">
+                                                            Satuan
+                                                        </TableHead>
+                                                        <TableHead className="min-w-30">
                                                             Harga
                                                         </TableHead>
-                                                        <TableHead className="w-32">
-                                                            Jumlah
+                                                        <TableHead className="min-w-32">
+                                                            Total
                                                         </TableHead>
-                                                        <TableHead className="w-12"></TableHead>
+                                                        <TableHead className="min-w-12"></TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
                                                     {Array.from(
-                                                        bmsCategories.values(),
+                                                        bmsItems.entries(),
                                                     ).map(
-                                                        (category, catIdx) => (
+                                                        (
+                                                            [itemId, itemGroup],
+                                                            idx,
+                                                        ) => (
                                                             <Fragment
-                                                                key={
-                                                                    category.categoryId
-                                                                }
+                                                                key={itemId}
                                                             >
-                                                                {/* Category Header Row */}
-                                                                <TableRow
-                                                                    key={`cat-${category.categoryId}`}
-                                                                    className="bg-primary/5 hover:bg-primary/10"
-                                                                >
+                                                                {/* Item Header Row */}
+                                                                <TableRow className="bg-primary/5 hover:bg-primary/10">
                                                                     <TableCell className="font-bold">
-                                                                        {catIdx +
+                                                                        {idx +
                                                                             1}
                                                                     </TableCell>
                                                                     <TableCell
                                                                         colSpan={
-                                                                            5
+                                                                            6
                                                                         }
                                                                         className="font-bold"
                                                                     >
-                                                                        {
-                                                                            category.categoryTitle
-                                                                        }
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span>
+                                                                                {
+                                                                                    itemGroup
+                                                                                        .checklistItem
+                                                                                        .name
+                                                                                }
+                                                                            </span>
+                                                                            <span className="text-xs font-normal text-muted-foreground">
+                                                                                (
+                                                                                {
+                                                                                    itemGroup.categoryTitle
+                                                                                }
+                                                                                )
+                                                                            </span>
+                                                                        </div>
                                                                     </TableCell>
                                                                 </TableRow>
 
-                                                                {/* Category Items */}
-                                                                {category.entries.map(
+                                                                {/* BMS Entries */}
+                                                                {itemGroup.entries.map(
                                                                     (entry) => (
                                                                         <TableRow
                                                                             key={
@@ -1224,7 +1271,7 @@ export default function CreateReportPage() {
                                                                             }
                                                                         >
                                                                             <TableCell></TableCell>
-                                                                            <TableCell className="pl-8">
+                                                                            <TableCell>
                                                                                 <Input
                                                                                     type="text"
                                                                                     placeholder="Nama barang"
@@ -1235,7 +1282,7 @@ export default function CreateReportPage() {
                                                                                         e,
                                                                                     ) =>
                                                                                         updateBmsEntry(
-                                                                                            category.categoryId,
+                                                                                            itemId,
                                                                                             entry.id,
                                                                                             "itemName",
                                                                                             e
@@ -1259,7 +1306,7 @@ export default function CreateReportPage() {
                                                                                         e,
                                                                                     ) =>
                                                                                         updateBmsEntry(
-                                                                                            category.categoryId,
+                                                                                            itemId,
                                                                                             entry.id,
                                                                                             "quantity",
                                                                                             parseFloat(
@@ -1274,6 +1321,57 @@ export default function CreateReportPage() {
                                                                                 />
                                                                             </TableCell>
                                                                             <TableCell>
+                                                                                <DropdownMenu>
+                                                                                    <DropdownMenuTrigger
+                                                                                        asChild
+                                                                                    >
+                                                                                        <Button
+                                                                                            variant="outline"
+                                                                                            className="h-8 w-full justify-between text-left"
+                                                                                        >
+                                                                                            {entry.unit ||
+                                                                                                "Pilih satuan"}
+                                                                                            <ChevronDown />
+                                                                                        </Button>
+                                                                                    </DropdownMenuTrigger>
+                                                                                    <DropdownMenuContent>
+                                                                                        {[
+                                                                                            "m1",
+                                                                                            "m2",
+                                                                                            "pcs",
+                                                                                            "unit",
+                                                                                            "lembar",
+                                                                                            "karung",
+                                                                                            "zak",
+                                                                                            "kg",
+                                                                                            "kaleng",
+                                                                                        ].map(
+                                                                                            (
+                                                                                                unitOption,
+                                                                                            ) => (
+                                                                                                <DropdownMenuItem
+                                                                                                    key={
+                                                                                                        unitOption
+                                                                                                    }
+                                                                                                    onSelect={() =>
+                                                                                                        updateBmsEntry(
+                                                                                                            itemId,
+                                                                                                            entry.id,
+                                                                                                            "unit",
+                                                                                                            unitOption,
+                                                                                                        )
+                                                                                                    }
+                                                                                                >
+                                                                                                    {
+                                                                                                        unitOption
+                                                                                                    }
+                                                                                                </DropdownMenuItem>
+                                                                                            ),
+                                                                                        )}
+                                                                                    </DropdownMenuContent>
+                                                                                </DropdownMenu>
+                                                                            </TableCell>
+                                                                            <TableCell>
                                                                                 <Input
                                                                                     type="number"
                                                                                     min="0"
@@ -1286,7 +1384,7 @@ export default function CreateReportPage() {
                                                                                         e,
                                                                                     ) =>
                                                                                         updateBmsEntry(
-                                                                                            category.categoryId,
+                                                                                            itemId,
                                                                                             entry.id,
                                                                                             "price",
                                                                                             parseFloat(
@@ -1314,7 +1412,7 @@ export default function CreateReportPage() {
                                                                                     className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                                                                                     onClick={() =>
                                                                                         removeBmsEntry(
-                                                                                            category.categoryId,
+                                                                                            itemId,
                                                                                             entry.id,
                                                                                         )
                                                                                     }
@@ -1327,14 +1425,11 @@ export default function CreateReportPage() {
                                                                 )}
 
                                                                 {/* Add Item Button Row */}
-                                                                <TableRow
-                                                                    key={`add-${category.categoryId}`}
-                                                                    className="hover:bg-muted/30"
-                                                                >
+                                                                <TableRow className="hover:bg-muted/30">
                                                                     <TableCell></TableCell>
                                                                     <TableCell
                                                                         colSpan={
-                                                                            5
+                                                                            6
                                                                         }
                                                                         className="pl-8"
                                                                     >
@@ -1345,7 +1440,7 @@ export default function CreateReportPage() {
                                                                             className="text-primary hover:text-primary hover:bg-primary/10"
                                                                             onClick={() =>
                                                                                 addBmsEntry(
-                                                                                    category.categoryId,
+                                                                                    itemId,
                                                                                 )
                                                                             }
                                                                         >
@@ -1356,31 +1451,24 @@ export default function CreateReportPage() {
                                                                     </TableCell>
                                                                 </TableRow>
 
-                                                                {/* Category Subtotal */}
-                                                                {category
+                                                                {/* Item Subtotal */}
+                                                                {itemGroup
                                                                     .entries
                                                                     .length >
                                                                     0 && (
-                                                                    <TableRow
-                                                                        key={`subtotal-${category.categoryId}`}
-                                                                        className="bg-muted/20"
-                                                                    >
+                                                                    <TableRow className="bg-muted/20">
                                                                         <TableCell></TableCell>
                                                                         <TableCell
                                                                             colSpan={
-                                                                                3
+                                                                                4
                                                                             }
                                                                             className="text-right font-semibold"
                                                                         >
-                                                                            Subtotal{" "}
-                                                                            {
-                                                                                category.categoryTitle
-                                                                            }
-                                                                            :
+                                                                            Subtotal:
                                                                         </TableCell>
                                                                         <TableCell className="text-right font-semibold text-primary">
                                                                             Rp{" "}
-                                                                            {category.entries
+                                                                            {itemGroup.entries
                                                                                 .reduce(
                                                                                     (
                                                                                         sum,
@@ -1405,7 +1493,7 @@ export default function CreateReportPage() {
                                                     <TableRow className="bg-primary/10 font-bold">
                                                         <TableCell></TableCell>
                                                         <TableCell
-                                                            colSpan={3}
+                                                            colSpan={4}
                                                             className="text-right text-base"
                                                         >
                                                             Total Keseluruhan:
@@ -1424,29 +1512,26 @@ export default function CreateReportPage() {
                                     </CardContent>
                                 </Card>
                             )}
-                            {kontraktorItems.length > 0 && (
+                            {rekananItems.length > 0 && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
-                                            Item Kontraktor (
-                                            {kontraktorItems.length})
+                                            Item Rekanan ({rekananItems.length})
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <Table>
                                             <TableBody>
-                                                {kontraktorItems.map(
-                                                    (item, i) => (
-                                                        <TableRow key={item.id}>
-                                                            <TableCell>
-                                                                {i + 1}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {item.name}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ),
-                                                )}
+                                                {rekananItems.map((item, i) => (
+                                                    <TableRow key={item.id}>
+                                                        <TableCell>
+                                                            {i + 1}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {item.name}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
                                             </TableBody>
                                         </Table>
                                     </CardContent>

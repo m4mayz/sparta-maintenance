@@ -22,6 +22,7 @@ import {
     Store,
     Calendar,
     ArrowRight,
+    FileClock,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -50,16 +51,9 @@ export default function DashboardPage() {
                             variant: "outline" as const,
                         },
                         {
-                            title: "Upload Penyelesaian",
-                            description: "Upload foto dan nota perbaikan",
-                            icon: ClipboardCheck,
-                            href: "/reports/upload",
-                            variant: "outline" as const,
-                        },
-                        {
                             title: "Riwayat",
                             description: "Riwayat laporan yang sudah selesai",
-                            icon: FolderOpen,
+                            icon: FileClock,
                             href: "/reports/history",
                             variant: "outline" as const,
                         },
@@ -239,19 +233,19 @@ export default function DashboardPage() {
             color: "text-primary",
         },
         {
-            label: "Dalam Proses",
+            label: "Menunggu approval",
             value: "0",
             icon: Clock,
             color: "text-yellow-600",
         },
         {
-            label: "Selesai",
+            label: "Laporan Selesai",
             value: "0",
             icon: CheckCircle2,
             color: "text-green-600",
         },
         {
-            label: "Perlu Review",
+            label: "Laporan Ditolak",
             value: "0",
             icon: AlertCircle,
             color: "text-red-600",
@@ -320,7 +314,7 @@ export default function DashboardPage() {
                             className="hover:shadow-md transition-shadow gap-2 py-3 md:py-6"
                         >
                             <CardHeader className="flex flex-row items-center px-0 md:px-6 justify-center md:justify-between space-y-0">
-                                <CardTitle className="text-xs text-center md:text-left md:text-sm font-medium text-nowrap">
+                                <CardTitle className="text-xs text-center md:text-left md:text-sm font-medium w-12 md:w-auto">
                                     {stat.label}
                                 </CardTitle>
                                 <stat.icon

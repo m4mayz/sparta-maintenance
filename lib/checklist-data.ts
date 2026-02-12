@@ -6,7 +6,7 @@ export interface ChecklistItem {
     name: string;
     condition: ChecklistCondition;
     photo?: File;
-    handler?: "BMS" | "Kontraktor" | "";
+    handler?: "BMS" | "Rekanan" | "";
 }
 
 export interface ChecklistCategory {

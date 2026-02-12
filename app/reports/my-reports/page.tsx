@@ -175,7 +175,7 @@ export default function MyReportsPage() {
                             value={statusFilter}
                             onValueChange={setStatusFilter}
                         >
-                            <SelectTrigger className="w-[130px] bg-background">
+                            <SelectTrigger className="w-auto bg-background">
                                 <div className="flex items-center gap-2">
                                     <Filter className="h-4 w-4 text-muted-foreground" />
                                     <SelectValue placeholder="Status" />
@@ -184,13 +184,13 @@ export default function MyReportsPage() {
                             <SelectContent>
                                 <SelectItem value="all">Semua</SelectItem>
                                 <SelectItem value="pending">
-                                    Menunggu
+                                    Menunggu Persetujuan
                                 </SelectItem>
                                 <SelectItem value="approved">
-                                    Diproses
+                                    Disetujui
                                 </SelectItem>
                                 <SelectItem value="rejected">
-                                    Selesai
+                                    Ditolak
                                 </SelectItem>
                             </SelectContent>
                         </Select>
