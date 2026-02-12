@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import { CameraModal } from "@/components/ui/camera-modal"; // Import Component Baru
+import { CameraModal } from "@/components/ui/camera-modal";
 import {
     Card,
     CardContent,
@@ -53,17 +53,30 @@ import {
     Trash2,
     X,
     Zap,
+    Plus,
 } from "lucide-react";
 import {
     checklistCategories,
     type ChecklistItem,
     type ChecklistCondition,
+    type ChecklistCategory,
 } from "@/lib/checklist-data";
 
-type BmsItem = ChecklistItem & {
+type BmsItemEntry = {
+    id: string;
+    categoryId: string;
+    categoryTitle: string;
+    itemName: string;
     quantity: number;
     price: number;
     total: number;
+};
+
+type BmsCategoryGroup = {
+    categoryId: string;
+    categoryTitle: string;
+    checklistItem: ChecklistItem;
+    entries: BmsItemEntry[];
 };
 
 export default function CreateReportPage() {
@@ -77,7 +90,9 @@ export default function CreateReportPage() {
     const [checklist, setChecklist] = useState<Map<string, ChecklistItem>>(
         new Map(),
     );
-    const [bmsItems, setBmsItems] = useState<Map<string, BmsItem>>(new Map());
+    const [bmsCategories, setBmsCategories] = useState<
+        Map<string, BmsCategoryGroup>
+    >(new Map());
 
     // STATE UNTUK CAMERA MODAL
     const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -192,8 +207,8 @@ export default function CreateReportPage() {
                     handler: "",
                 };
 
-                // If rusak, add photo and handler
-                if (condition === "rusak") {
+                // If baik or rusak, add photo
+                if (condition === "baik" || condition === "rusak") {
                     try {
                         const dummyPhoto = await new Promise<File>(
                             (resolve) => {
@@ -202,7 +217,10 @@ export default function CreateReportPage() {
                                 canvas.height = 480;
                                 const ctx = canvas.getContext("2d");
                                 if (ctx) {
-                                    ctx.fillStyle = "#4F46E5";
+                                    ctx.fillStyle =
+                                        condition === "baik"
+                                            ? "#10B981"
+                                            : "#4F46E5";
                                     ctx.fillRect(
                                         0,
                                         0,
@@ -219,7 +237,9 @@ export default function CreateReportPage() {
                                     );
                                     ctx.font = "20px Arial";
                                     ctx.fillText(
-                                        "(Dummy Photo)",
+                                        condition === "baik"
+                                            ? "(Foto Bukti)"
+                                            : "(Dummy Photo)",
                                         canvas.width / 2,
                                         canvas.height / 2 + 20,
                                     );
@@ -245,8 +265,10 @@ export default function CreateReportPage() {
                     } catch (error) {
                         console.error("Error creating dummy photo:", error);
                     }
+                }
 
-                    // Alternate between BMS and Kontraktor
+                // If rusak, add handler
+                if (condition === "rusak") {
                     checklistItem.handler =
                         itemIndex % 2 === 0 ? "BMS" : "Kontraktor";
                 }
@@ -256,6 +278,52 @@ export default function CreateReportPage() {
         }
 
         setChecklist(newChecklist);
+
+        // Auto-populate BMS categories with sample entries (for step 2)
+        const bmsCats = new Map<string, BmsCategoryGroup>();
+        for (const [id, item] of newChecklist) {
+            if (item.condition === "rusak" && item.handler === "BMS") {
+                let categoryData: ChecklistCategory | undefined;
+                for (const cat of checklistCategories) {
+                    if (cat.items.some((i) => i.id === id)) {
+                        categoryData = cat;
+                        break;
+                    }
+                }
+
+                if (categoryData) {
+                    const categoryId = categoryData.id;
+
+                    if (!bmsCats.has(categoryId)) {
+                        bmsCats.set(categoryId, {
+                            categoryId: categoryData.id,
+                            categoryTitle: categoryData.title,
+                            checklistItem: item,
+                            entries: [],
+                        });
+                    }
+
+                    // Add 2 sample entries per category
+                    const cat = bmsCats.get(categoryId)!;
+                    for (let i = 1; i <= 2; i++) {
+                        cat.entries.push({
+                            id: `entry_${categoryId}_${i}_${Date.now()}`,
+                            categoryId: categoryData.id,
+                            categoryTitle: categoryData.title,
+                            itemName: `Barang Contoh ${i}`,
+                            quantity: Math.floor(Math.random() * 10) + 1,
+                            price: (Math.floor(Math.random() * 10) + 1) * 50000,
+                            total: 0,
+                        });
+                        // Calculate total
+                        const lastEntry = cat.entries[cat.entries.length - 1];
+                        lastEntry.total = lastEntry.quantity * lastEntry.price;
+                    }
+                }
+            }
+        }
+        setBmsCategories(bmsCats);
+
         toast.success("Form berhasil diisi otomatis!");
     };
 
@@ -284,6 +352,12 @@ export default function CreateReportPage() {
                 toast.error("Semua item wajib diisi kondisinya");
                 return false;
             }
+            if (item.condition === "baik") {
+                if (!item.photo) {
+                    toast.error(`Item "${item.name}" wajib upload foto bukti`);
+                    return false;
+                }
+            }
             if (item.condition === "rusak") {
                 if (!item.photo) {
                     toast.error(`Item "${item.name}" rusak wajib upload foto`);
@@ -303,48 +377,142 @@ export default function CreateReportPage() {
     const handleNextStep = () => {
         if (!validateStep1()) return;
 
-        const bmsData = new Map<string, BmsItem>();
+        // Group BMS items by category
+        const categoryGroups = new Map<string, BmsCategoryGroup>();
+
         for (const [id, item] of checklist) {
             if (item.condition === "rusak" && item.handler === "BMS") {
-                bmsData.set(id, {
-                    ...item,
-                    quantity: 0,
-                    price: 0,
-                    total: 0,
-                });
+                // Find category for this item
+                let categoryData: ChecklistCategory | undefined;
+                for (const cat of checklistCategories) {
+                    if (cat.items.some((i) => i.id === id)) {
+                        categoryData = cat;
+                        break;
+                    }
+                }
+
+                if (categoryData) {
+                    const categoryId = categoryData.id;
+
+                    if (!categoryGroups.has(categoryId)) {
+                        categoryGroups.set(categoryId, {
+                            categoryId: categoryData.id,
+                            categoryTitle: categoryData.title,
+                            checklistItem: item,
+                            entries: [],
+                        });
+                    }
+                }
             }
         }
-        setBmsItems(bmsData);
+
+        setBmsCategories(categoryGroups);
         setStep(2);
         window.scrollTo(0, 0);
     };
 
-    const updateBmsItem = (
-        itemId: string,
-        field: "quantity" | "price",
-        value: number,
-    ) => {
-        setBmsItems((prev) => {
+    const addBmsEntry = (categoryId: string) => {
+        setBmsCategories((prev) => {
             const next = new Map(prev);
-            const item = next.get(itemId);
-            if (item) {
-                const updated = { ...item, [field]: value };
-                updated.total = updated.quantity * updated.price;
-                next.set(itemId, updated);
+            const category = next.get(categoryId);
+            if (category) {
+                const newEntry: BmsItemEntry = {
+                    id: `entry_${Date.now()}_${Math.random()}`,
+                    categoryId: category.categoryId,
+                    categoryTitle: category.categoryTitle,
+                    itemName: "",
+                    quantity: 0,
+                    price: 0,
+                    total: 0,
+                };
+                // Create new array instead of mutating
+                const updatedCategory = {
+                    ...category,
+                    entries: [...category.entries, newEntry],
+                };
+                next.set(categoryId, updatedCategory);
+            }
+            return next;
+        });
+    };
+
+    const updateBmsEntry = (
+        categoryId: string,
+        entryId: string,
+        field: "itemName" | "quantity" | "price",
+        value: string | number,
+    ) => {
+        setBmsCategories((prev) => {
+            const next = new Map(prev);
+            const category = next.get(categoryId);
+            if (category) {
+                const entryIndex = category.entries.findIndex(
+                    (e) => e.id === entryId,
+                );
+                if (entryIndex !== -1) {
+                    const updated = {
+                        ...category.entries[entryIndex],
+                        [field]: value,
+                    };
+                    if (field === "quantity" || field === "price") {
+                        updated.total = updated.quantity * updated.price;
+                    }
+                    // Create new array with updated entry
+                    const updatedEntries = [...category.entries];
+                    updatedEntries[entryIndex] = updated;
+                    const updatedCategory = {
+                        ...category,
+                        entries: updatedEntries,
+                    };
+                    next.set(categoryId, updatedCategory);
+                }
+            }
+            return next;
+        });
+    };
+
+    const removeBmsEntry = (categoryId: string, entryId: string) => {
+        setBmsCategories((prev) => {
+            const next = new Map(prev);
+            const category = next.get(categoryId);
+            if (category) {
+                // Create new array without the removed entry
+                const updatedCategory = {
+                    ...category,
+                    entries: category.entries.filter((e) => e.id !== entryId),
+                };
+                next.set(categoryId, updatedCategory);
             }
             return next;
         });
     };
 
     const validateStep2 = (): boolean => {
-        for (const item of bmsItems.values()) {
-            if (item.quantity <= 0) {
-                toast.error(`Quantity untuk "${item.name}" wajib diisi`);
+        for (const category of bmsCategories.values()) {
+            if (category.entries.length === 0) {
+                toast.error(
+                    `Kategori "${category.categoryTitle}" harus memiliki minimal 1 barang`,
+                );
                 return false;
             }
-            if (item.price <= 0) {
-                toast.error(`Harga untuk "${item.name}" wajib diisi`);
-                return false;
+
+            for (const entry of category.entries) {
+                if (!entry.itemName.trim()) {
+                    toast.error(
+                        `Nama item di kategori "${category.categoryTitle}" wajib diisi`,
+                    );
+                    return false;
+                }
+                if (entry.quantity <= 0) {
+                    toast.error(
+                        `Quantity untuk "${entry.itemName}" wajib diisi`,
+                    );
+                    return false;
+                }
+                if (entry.price <= 0) {
+                    toast.error(`Harga untuk "${entry.itemName}" wajib diisi`);
+                    return false;
+                }
             }
         }
         return true;
@@ -363,7 +531,10 @@ export default function CreateReportPage() {
     const kontraktorItems = rusakItems.filter(
         (i) => i.handler === "Kontraktor",
     );
-    const bmsItemsCount = rusakItems.filter((i) => i.handler === "BMS").length;
+    const grandTotalBms = Array.from(bmsCategories.values()).reduce(
+        (sum, cat) => sum + cat.entries.reduce((s, e) => s + e.total, 0),
+        0,
+    );
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
@@ -676,7 +847,7 @@ export default function CreateReportPage() {
                                                                                 <div>
                                                                                     <Label className="text-sm">
                                                                                         Foto
-                                                                                        Kerusakan{" "}
+                                                                                        Bukti{" "}
                                                                                         <span className="text-red-500">
                                                                                             *
                                                                                         </span>
@@ -940,10 +1111,7 @@ export default function CreateReportPage() {
                         </div>
                     </div>
                 ) : (
-                    /* ... (TAMPILAN STEP 2 TIDAK BERUBAH DARI SEBELUMNYA) ... */
-                    /* Copy paste bagian step 2 dari kode sebelumnya di sini */
                     <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-8">
-                        {/* Gunakan kode Step 2 dari response saya sebelumnya */}
                         <div className="md:col-span-4 md:order-1">
                             <div className="md:sticky md:top-24">
                                 <Card>
@@ -982,129 +1150,273 @@ export default function CreateReportPage() {
                             </div>
                         </div>
                         <div className="md:col-span-8 md:order-2 space-y-6">
-                            {bmsItemsCount > 0 && (
+                            {bmsCategories.size > 0 && (
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
                                             Estimasi Harga BMS
                                         </CardTitle>
                                         <CardDescription className="text-xs">
-                                            Isi quantity dan harga
+                                            Tambahkan barang untuk setiap
+                                            kategori
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="border rounded-lg overflow-x-auto">
+                                        <div className="border rounded-lg overflow-hidden">
                                             <Table>
                                                 <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>
+                                                    <TableRow className="bg-muted/30">
+                                                        <TableHead className="w-12">
                                                             No
                                                         </TableHead>
                                                         <TableHead>
                                                             Item
                                                         </TableHead>
-                                                        <TableHead>
-                                                            Quantity
+                                                        <TableHead className="w-24">
+                                                            Qty
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="w-32">
                                                             Harga
                                                         </TableHead>
-                                                        <TableHead>
+                                                        <TableHead className="w-32">
                                                             Jumlah
                                                         </TableHead>
+                                                        <TableHead className="w-12"></TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
                                                     {Array.from(
-                                                        bmsItems.values(),
-                                                    ).map((item, i) => (
-                                                        <TableRow key={item.id}>
-                                                            <TableCell>
-                                                                {i + 1}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {item.name}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    value={
-                                                                        item.quantity ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        updateBmsItem(
-                                                                            item.id,
-                                                                            "quantity",
-                                                                            parseFloat(
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            ) ||
-                                                                                0,
-                                                                        )
-                                                                    }
-                                                                    className="h-8 w-20"
-                                                                />
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <Input
-                                                                    type="number"
-                                                                    min="0"
-                                                                    value={
-                                                                        item.price ||
-                                                                        ""
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        updateBmsItem(
-                                                                            item.id,
-                                                                            "price",
-                                                                            parseFloat(
-                                                                                e
-                                                                                    .target
-                                                                                    .value,
-                                                                            ) ||
-                                                                                0,
-                                                                        )
-                                                                    }
-                                                                    className="h-8 w-32"
-                                                                />
-                                                            </TableCell>
-                                                            <TableCell className="text-right">
-                                                                Rp{" "}
-                                                                {item.total.toLocaleString(
-                                                                    "id-ID",
+                                                        bmsCategories.values(),
+                                                    ).map(
+                                                        (category, catIdx) => (
+                                                            <Fragment
+                                                                key={
+                                                                    category.categoryId
+                                                                }
+                                                            >
+                                                                {/* Category Header Row */}
+                                                                <TableRow
+                                                                    key={`cat-${category.categoryId}`}
+                                                                    className="bg-primary/5 hover:bg-primary/10"
+                                                                >
+                                                                    <TableCell className="font-bold">
+                                                                        {catIdx +
+                                                                            1}
+                                                                    </TableCell>
+                                                                    <TableCell
+                                                                        colSpan={
+                                                                            5
+                                                                        }
+                                                                        className="font-bold"
+                                                                    >
+                                                                        {
+                                                                            category.categoryTitle
+                                                                        }
+                                                                    </TableCell>
+                                                                </TableRow>
+
+                                                                {/* Category Items */}
+                                                                {category.entries.map(
+                                                                    (entry) => (
+                                                                        <TableRow
+                                                                            key={
+                                                                                entry.id
+                                                                            }
+                                                                        >
+                                                                            <TableCell></TableCell>
+                                                                            <TableCell className="pl-8">
+                                                                                <Input
+                                                                                    type="text"
+                                                                                    placeholder="Nama barang"
+                                                                                    value={
+                                                                                        entry.itemName
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        updateBmsEntry(
+                                                                                            category.categoryId,
+                                                                                            entry.id,
+                                                                                            "itemName",
+                                                                                            e
+                                                                                                .target
+                                                                                                .value,
+                                                                                        )
+                                                                                    }
+                                                                                    className="h-8"
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    min="0"
+                                                                                    placeholder="0"
+                                                                                    value={
+                                                                                        entry.quantity ||
+                                                                                        ""
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        updateBmsEntry(
+                                                                                            category.categoryId,
+                                                                                            entry.id,
+                                                                                            "quantity",
+                                                                                            parseFloat(
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            ) ||
+                                                                                                0,
+                                                                                        )
+                                                                                    }
+                                                                                    className="h-8"
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    min="0"
+                                                                                    placeholder="0"
+                                                                                    value={
+                                                                                        entry.price ||
+                                                                                        ""
+                                                                                    }
+                                                                                    onChange={(
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        updateBmsEntry(
+                                                                                            category.categoryId,
+                                                                                            entry.id,
+                                                                                            "price",
+                                                                                            parseFloat(
+                                                                                                e
+                                                                                                    .target
+                                                                                                    .value,
+                                                                                            ) ||
+                                                                                                0,
+                                                                                        )
+                                                                                    }
+                                                                                    className="h-8"
+                                                                                />
+                                                                            </TableCell>
+                                                                            <TableCell className="text-right font-medium">
+                                                                                Rp{" "}
+                                                                                {entry.total.toLocaleString(
+                                                                                    "id-ID",
+                                                                                )}
+                                                                            </TableCell>
+                                                                            <TableCell>
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="icon"
+                                                                                    variant="ghost"
+                                                                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                                                    onClick={() =>
+                                                                                        removeBmsEntry(
+                                                                                            category.categoryId,
+                                                                                            entry.id,
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                                </Button>
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    ),
                                                                 )}
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                    <TableRow>
+
+                                                                {/* Add Item Button Row */}
+                                                                <TableRow
+                                                                    key={`add-${category.categoryId}`}
+                                                                    className="hover:bg-muted/30"
+                                                                >
+                                                                    <TableCell></TableCell>
+                                                                    <TableCell
+                                                                        colSpan={
+                                                                            5
+                                                                        }
+                                                                        className="pl-8"
+                                                                    >
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            className="text-primary hover:text-primary hover:bg-primary/10"
+                                                                            onClick={() =>
+                                                                                addBmsEntry(
+                                                                                    category.categoryId,
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Plus className="h-4 w-4 mr-1" />
+                                                                            Tambah
+                                                                            barang
+                                                                        </Button>
+                                                                    </TableCell>
+                                                                </TableRow>
+
+                                                                {/* Category Subtotal */}
+                                                                {category
+                                                                    .entries
+                                                                    .length >
+                                                                    0 && (
+                                                                    <TableRow
+                                                                        key={`subtotal-${category.categoryId}`}
+                                                                        className="bg-muted/20"
+                                                                    >
+                                                                        <TableCell></TableCell>
+                                                                        <TableCell
+                                                                            colSpan={
+                                                                                3
+                                                                            }
+                                                                            className="text-right font-semibold"
+                                                                        >
+                                                                            Subtotal{" "}
+                                                                            {
+                                                                                category.categoryTitle
+                                                                            }
+                                                                            :
+                                                                        </TableCell>
+                                                                        <TableCell className="text-right font-semibold text-primary">
+                                                                            Rp{" "}
+                                                                            {category.entries
+                                                                                .reduce(
+                                                                                    (
+                                                                                        sum,
+                                                                                        e,
+                                                                                    ) =>
+                                                                                        sum +
+                                                                                        e.total,
+                                                                                    0,
+                                                                                )
+                                                                                .toLocaleString(
+                                                                                    "id-ID",
+                                                                                )}
+                                                                        </TableCell>
+                                                                        <TableCell></TableCell>
+                                                                    </TableRow>
+                                                                )}
+                                                            </Fragment>
+                                                        ),
+                                                    )}
+
+                                                    {/* Grand Total */}
+                                                    <TableRow className="bg-primary/10 font-bold">
+                                                        <TableCell></TableCell>
                                                         <TableCell
-                                                            colSpan={4}
-                                                            className="text-right font-bold"
+                                                            colSpan={3}
+                                                            className="text-right text-base"
                                                         >
-                                                            Total:
+                                                            Total Keseluruhan:
                                                         </TableCell>
-                                                        <TableCell className="text-right font-bold text-primary">
+                                                        <TableCell className="text-right text-base text-primary">
                                                             Rp{" "}
-                                                            {Array.from(
-                                                                bmsItems.values(),
-                                                            )
-                                                                .reduce(
-                                                                    (sum, i) =>
-                                                                        sum +
-                                                                        i.total,
-                                                                    0,
-                                                                )
-                                                                .toLocaleString(
-                                                                    "id-ID",
-                                                                )}
+                                                            {grandTotalBms.toLocaleString(
+                                                                "id-ID",
+                                                            )}
                                                         </TableCell>
+                                                        <TableCell></TableCell>
                                                     </TableRow>
                                                 </TableBody>
                                             </Table>
@@ -1112,7 +1424,6 @@ export default function CreateReportPage() {
                                     </CardContent>
                                 </Card>
                             )}
-                            {/* ... (Tabel Kontraktor sama) ... */}
                             {kontraktorItems.length > 0 && (
                                 <Card>
                                     <CardHeader>
