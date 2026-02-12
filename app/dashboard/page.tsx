@@ -22,11 +22,8 @@ import {
     Store,
     Calendar,
     ArrowRight,
-<<<<<<< Updated upstream
     FileClock,
-=======
     ClipboardClock,
->>>>>>> Stashed changes
 } from "lucide-react";
 import Link from "next/link";
 
