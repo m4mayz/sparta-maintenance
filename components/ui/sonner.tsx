@@ -13,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
     return (
         <Sonner
             theme="light"
-            className="toaster group"
+            className="toaster group font-sans"
             icons={{
                 success: <CircleCheckIcon className="size-4" />,
                 info: <InfoIcon className="size-4" />,
@@ -27,6 +27,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
                     "--normal-text": "white",
                     "--normal-border": "var(--primary)",
                     "--border-radius": "var(--radius)",
+                    fontFamily: "var(--font-sans)",
                 } as React.CSSProperties
             }
             toastOptions={{

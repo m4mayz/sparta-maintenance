@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Sparta Maintenance | Sistem Manajemen Pemeliharaan",
+    title: "SPARTA Maintenance | Sistem Manajemen Pemeliharaan",
     description:
         "Platform terpusat untuk pelaporan kerusakan, monitoring perbaikan, dan pengelolaan SPJ maintenance di seluruh store",
 };

@@ -4,10 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import {
-    Card,
-    CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
     Table,
     TableBody,
@@ -43,9 +40,10 @@ import {
     ChevronRight,
     Clock,
     CheckCircle2,
-    Wrench,
     MoreHorizontal,
     ArrowUpDown,
+    X,
+    Check,
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -73,7 +71,7 @@ const MOCK_REPORTS = [
         location: "Gudang Belakang",
         damageType: "Plumbing",
         description: "Pipa wastafel bocor membasahi lantai",
-        status: "in_progress",
+        status: "approved",
         date: "2024-02-09",
         cost: 350000,
     },
@@ -83,7 +81,7 @@ const MOCK_REPORTS = [
         location: "Area Sales",
         damageType: "AC",
         description: "AC tidak dingin, hanya keluar angin",
-        status: "completed",
+        status: "rejected",
         date: "2024-02-08",
         cost: 750000,
     },
@@ -119,20 +117,29 @@ export default function MyReportsPage() {
         switch (status) {
             case "pending":
                 return (
-                    <Badge variant="secondary" className="gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-100/80 border-yellow-200 shadow-none">
-                        <Clock className="h-3 w-3" /> Menunggu
+                    <Badge
+                        variant="secondary"
+                        className="gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-100/80 border-yellow-200 shadow-none"
+                    >
+                        <Clock className="h-3 w-3" /> Menunggu persetujuan
                     </Badge>
                 );
-            case "in_progress":
+            case "approved":
                 return (
-                    <Badge variant="secondary" className="gap-1 bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-blue-200 shadow-none">
-                        <Wrench className="h-3 w-3" /> Diproses
+                    <Badge
+                        variant="secondary"
+                        className="gap-1 bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200 shadow-none"
+                    >
+                        <Check className="h-3 w-3" /> Disetujui
                     </Badge>
                 );
-            case "completed":
+            case "rejected":
                 return (
-                    <Badge variant="secondary" className="gap-1 bg-green-100 text-green-700 hover:bg-green-100/80 border-green-200 shadow-none">
-                        <CheckCircle2 className="h-3 w-3" /> Selesai
+                    <Badge
+                        variant="secondary"
+                        className="gap-1 bg-red-100 text-red-700 hover:bg-red-100/80 border-red-200 shadow-none"
+                    >
+                        <X className="h-3 w-3" /> Ditolak
                     </Badge>
                 );
             default:
@@ -152,7 +159,6 @@ export default function MyReportsPage() {
 
             {/* Container diperlebar ke max-w-6xl untuk mengakomodasi Table Desktop */}
             <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl space-y-6">
-                
                 {/* Action Bar: Search, Filter, Create */}
                 <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
                     <div className="flex flex-1 gap-2">
@@ -165,7 +171,10 @@ export default function MyReportsPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <Select
+                            value={statusFilter}
+                            onValueChange={setStatusFilter}
+                        >
                             <SelectTrigger className="w-[130px] bg-background">
                                 <div className="flex items-center gap-2">
                                     <Filter className="h-4 w-4 text-muted-foreground" />
@@ -174,14 +183,20 @@ export default function MyReportsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Semua</SelectItem>
-                                <SelectItem value="pending">Menunggu</SelectItem>
-                                <SelectItem value="in_progress">Diproses</SelectItem>
-                                <SelectItem value="completed">Selesai</SelectItem>
+                                <SelectItem value="pending">
+                                    Menunggu
+                                </SelectItem>
+                                <SelectItem value="approved">
+                                    Diproses
+                                </SelectItem>
+                                <SelectItem value="rejected">
+                                    Selesai
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                    
-                    <Button 
+
+                    <Button
                         onClick={() => router.push("/reports/create")}
                         className="w-full md:w-auto gap-2 shadow-sm"
                     >
@@ -196,10 +211,12 @@ export default function MyReportsPage() {
                         {/* --- MOBILE VIEW: CARD LIST (Visible on small screens) --- */}
                         <div className="space-y-3 md:hidden">
                             {filteredReports.map((report) => (
-                                <Card 
-                                    key={report.id} 
+                                <Card
+                                    key={report.id}
                                     className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.99] shadow-sm"
-                                    onClick={() => console.log("View detail", report.id)}
+                                    onClick={() =>
+                                        console.log("View detail", report.id)
+                                    }
                                 >
                                     <CardContent className="p-4">
                                         <div className="flex justify-between items-start mb-3">
@@ -217,7 +234,9 @@ export default function MyReportsPage() {
                                         <div className="grid gap-2 text-sm text-muted-foreground mb-3">
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="h-3.5 w-3.5 shrink-0" />
-                                                <span className="truncate">{report.location}</span>
+                                                <span className="truncate">
+                                                    {report.location}
+                                                </span>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="h-3.5 w-3.5 shrink-0" />
@@ -226,7 +245,10 @@ export default function MyReportsPage() {
                                         </div>
 
                                         <div className="flex items-center justify-between pt-3 border-t mt-3">
-                                            <Badge variant="outline" className="capitalize font-normal text-xs bg-muted/50">
+                                            <Badge
+                                                variant="outline"
+                                                className="capitalize font-normal text-xs bg-muted/50"
+                                            >
                                                 {report.damageType}
                                             </Badge>
                                             <div className="flex items-center text-xs text-primary font-medium group">
@@ -244,39 +266,57 @@ export default function MyReportsPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                        <TableHead className="w-[100px]">ID Laporan</TableHead>
-                                        <TableHead className="min-w-[200px]">Toko & Lokasi</TableHead>
+                                        <TableHead className="w-[100px]">
+                                            ID Laporan
+                                        </TableHead>
+                                        <TableHead className="min-w-[200px]">
+                                            Toko & Lokasi
+                                        </TableHead>
                                         <TableHead>Kategori</TableHead>
                                         <TableHead>
                                             <div className="flex items-center gap-1 cursor-pointer hover:text-foreground">
-                                                Tanggal <ArrowUpDown className="h-3 w-3" />
+                                                Tanggal{" "}
+                                                <ArrowUpDown className="h-3 w-3" />
                                             </div>
                                         </TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Estimasi</TableHead>
+                                        <TableHead className="text-right">
+                                            Estimasi
+                                        </TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredReports.map((report) => (
-                                        <TableRow 
-                                            key={report.id} 
+                                        <TableRow
+                                            key={report.id}
                                             className="cursor-pointer group"
-                                            onClick={() => console.log("View detail", report.id)}
+                                            onClick={() =>
+                                                console.log(
+                                                    "View detail",
+                                                    report.id,
+                                                )
+                                            }
                                         >
                                             <TableCell className="font-mono text-xs font-medium text-muted-foreground">
                                                 {report.id}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="font-medium text-sm">{report.store}</span>
+                                                    <span className="font-medium text-sm">
+                                                        {report.store}
+                                                    </span>
                                                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <MapPin className="h-3 w-3" /> {report.location}
+                                                        <MapPin className="h-3 w-3" />{" "}
+                                                        {report.location}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className="capitalize font-normal bg-muted/30">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="capitalize font-normal bg-muted/30"
+                                                >
                                                     {report.damageType}
                                                 </Badge>
                                             </TableCell>
@@ -287,22 +327,49 @@ export default function MyReportsPage() {
                                                 {getStatusBadge(report.status)}
                                             </TableCell>
                                             <TableCell className="text-right font-mono text-sm">
-                                                Rp {report.cost.toLocaleString('id-ID')}
+                                                Rp{" "}
+                                                {report.cost.toLocaleString(
+                                                    "id-ID",
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
                                                             <MoreHorizontal className="h-4 w-4" />
-                                                            <span className="sr-only">Menu</span>
+                                                            <span className="sr-only">
+                                                                Menu
+                                                            </span>
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                                                        <DropdownMenuItem onClick={(e) => {e.stopPropagation(); console.log("Edit")}}>
+                                                        <DropdownMenuLabel>
+                                                            Aksi
+                                                        </DropdownMenuLabel>
+                                                        <DropdownMenuItem
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                console.log(
+                                                                    "Edit",
+                                                                );
+                                                            }}
+                                                        >
                                                             Edit Laporan
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={(e) => {e.stopPropagation(); console.log("History")}}>
+                                                        <DropdownMenuItem
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                console.log(
+                                                                    "History",
+                                                                );
+                                                            }}
+                                                        >
                                                             Lihat Riwayat
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
@@ -322,15 +389,21 @@ export default function MyReportsPage() {
                                 <EmptyMedia variant="icon">
                                     <FileText className="h-10 w-10 text-muted-foreground" />
                                 </EmptyMedia>
-                                <EmptyTitle>Tidak ada laporan ditemukan</EmptyTitle>
+                                <EmptyTitle>
+                                    Tidak ada laporan ditemukan
+                                </EmptyTitle>
                                 <EmptyDescription>
-                                    {searchQuery 
-                                        ? "Coba ubah kata kunci pencarian atau filter Anda." 
+                                    {searchQuery
+                                        ? "Coba ubah kata kunci pencarian atau filter Anda."
                                         : "Anda belum membuat laporan kerusakan apapun."}
                                 </EmptyDescription>
                                 {!searchQuery && (
                                     <div className="pt-4">
-                                        <Button onClick={() => router.push("/reports/create")}>
+                                        <Button
+                                            onClick={() =>
+                                                router.push("/reports/create")
+                                            }
+                                        >
                                             Buat Laporan Sekarang
                                         </Button>
                                     </div>
