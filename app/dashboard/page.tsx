@@ -22,11 +22,15 @@ import {
     Store,
     Calendar,
     ArrowRight,
+<<<<<<< Updated upstream
     FileClock,
+=======
+    ClipboardClock,
+>>>>>>> Stashed changes
 } from "lucide-react";
 import Link from "next/link";
 
-const ROLE_USER: "MS" | "COS" | "COORDINATOR" | "ADMIN" | "MANAGER" = "MS";
+const ROLE_USER: "MS" | "COS" | "COORDINATOR" | "ADMIN" | "MANAGER" = "COORDINATOR";
 
 export default function DashboardPage() {
     const getMenuByRole = () => {
@@ -100,31 +104,17 @@ export default function DashboardPage() {
                 return {
                     menus: [
                         {
-                            title: "Monitoring Laporan",
-                            description: "Dashboard monitoring semua laporan",
-                            icon: BarChart3,
-                            href: "/monitoring/dashboard",
+                            title: "Approval Laporan",
+                            description: "Persetujuan laporan maintenance",
+                            icon: ClipboardCheck,
+                            href: "/approval/reports",
                             variant: "default" as const,
                         },
                         {
-                            title: "Konfirmasi Data",
-                            description: "Konfirmasi kelengkapan administratif",
-                            icon: ListChecks,
-                            href: "/monitoring/confirmation",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Laporan Bermasalah",
-                            description: "Laporan yang memerlukan perhatian",
-                            icon: AlertCircle,
-                            href: "/monitoring/issues",
-                            variant: "outline" as const,
-                        },
-                        {
-                            title: "Statistik",
-                            description: "Analisa dan statistik maintenance",
-                            icon: BarChart3,
-                            href: "/monitoring/statistics",
+                            title: "Riwayat Laporan",
+                            description: "Riwayat semua laporan maintenance",
+                            icon: ClipboardClock,
+                            href: "/approval/history",
                             variant: "outline" as const,
                         },
                     ],
