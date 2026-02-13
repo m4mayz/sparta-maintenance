@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -7,25 +6,25 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url dan directUrl sudah dipindahkan ke prisma.config.ts
+  // Ingat konfigurasi URL ada di prisma.config.ts
 }
 
 // =========================================
-// ENUMS (Pilihan Data Tetap)
+// ENUMS
 // =========================================
 
 enum UserRole {
-  BMS   // Pemohon / Teknisi
-  BMC   // Approver / Supervisor
-  ADMIN // Administrator Sistem
+  BMS
+  BMC
+  ADMIN
 }
 
 enum ReportStatus {
-  DRAFT               // Sedang diisi BMS
-  PENDING_APPROVAL    // Sudah dikirim, menunggu BMC
-  APPROVED            // Disetujui BMC (OK)
-  REJECTED            // Ditolak/Revisi BMC (NOK)
-  COMPLETED           // Selesai sepenuhnya
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  COMPLETED
 }
 
 enum ItemCondition {
@@ -40,67 +39,38 @@ enum HandlerType {
 }
 
 // =========================================
-// MODELS (Tabel Data)
+// MODELS
 // =========================================
 
-// Tabel Pengguna (Bisa disinkronkan dengan Supabase Auth)
 model User {
   id            String        @id @default(uuid())
-  email         String        @unique // Digunakan sebagai User Login BMS
+  email         String        @unique
+  password      String?       
   name          String
   role          UserRole      @default(BMS)
-  branchName    String?       // Nama Cabang (untuk validasi password di flow lama)
+  branchName    String?       
   
-  // Relasi
   reports       Report[]      @relation("CreatedReports")
-  approvals     ApprovalLog[] // Relasi ke log approval yang dilakukan
+  approvals     ApprovalLog[] 
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
 
-// Tabel Master Kategori (Contoh: A. Bagian Depan Bangunan)
-model MasterCategory {
-  id          String       @id @default(uuid())
-  title       String       // Judul Kategori
-  order       Int          // Untuk urutan tampilan
-  
-  // Relasi
-  items       MasterItem[]
-  
-  createdAt   DateTime     @default(now())
-}
-
-// Tabel Master Item (Contoh: Bahu Jalan, Teras Depan)
-model MasterItem {
-  id          String         @id @default(uuid())
-  categoryId  String
-  name        String         // Nama Item Ceklist
-  
-  // Relasi
-  category    MasterCategory @relation(fields: [categoryId], references: [id])
-  reports     ReportItem[]   // Relasi ke tabel transaksi
-}
-
-// Tabel Laporan Utama (Header)
 model Report {
   id            String        @id @default(uuid())
   
-  // Informasi Header (Dari Input Data Awal)
-  ticketNumber  String        @unique // Generate otomatis (misal: RPT-20240212-001)
-  branchCode    String        // Kode Toko (HURUF BESAR)
-  branchName    String        // Nama Toko (HURUF BESAR)
-  contactNumber String        // No HP BMS
+  ticketNumber  String        @unique 
+  branchCode    String        
+  branchName    String        
+  contactNumber String        
   
-  // Status & Keuangan
   status        ReportStatus  @default(DRAFT)
-  totalEstimation Decimal     @default(0) @db.Decimal(15, 2) // Total Estimasi Material (Rp)
+  totalEstimation Decimal     @default(0) @db.Decimal(15, 2)
   
-  // Metadata & Relasi User
   createdById   String
   createdBy     User          @relation("CreatedReports", fields: [createdById], references: [id])
   
-  // Relasi ke Item & Log
   items         ReportItem[]
   logs          ApprovalLog[]
 
@@ -108,51 +78,48 @@ model Report {
   updatedAt     DateTime      @updatedAt
 }
 
-// Tabel Detail Ceklist (Transaksi per Item)
 model ReportItem {
   id            String        @id @default(uuid())
   reportId      String
-  masterItemId  String        
   
-  // Hasil Ceklist
+  // KITA UBAH DISINI: Tidak pakai relasi MasterItem
+  // Kita simpan ID dan Nama dari file checklist-data.ts sebagai "Snapshot"
+  itemId        String        // Contoh: "A1"
+  itemName      String        // Contoh: "Bahu Jalan"
+  categoryName  String        // Contoh: "A. Bagian Depan Bangunan"
+  
   condition     ItemCondition
-  photoUrl      String?       // URL Foto dari Supabase Storage
-  handler       HandlerType?  // BMS atau Rekanan
+  photoUrl      String?       
+  handler       HandlerType?  
   
-  // Relasi
   report        Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  masterItem    MasterItem    @relation(fields: [masterItemId], references: [id])
   estimations   MaterialEstimation[] 
 
-  @@unique([reportId, masterItemId]) // Mencegah duplikasi item dalam satu laporan
+  // Unik: Satu report tidak boleh punya dua item dengan ID "A1"
+  @@unique([reportId, itemId]) 
 }
 
-// Tabel Estimasi Material (Jika kondisi Rusak)
 model MaterialEstimation {
   id            String    @id @default(uuid())
   reportItemId  String
   
-  // Detail Material
-  itemName      String    // Nama Barang (Misal: Cat, Semen)
+  itemName      String    
   quantity      Int
-  unit          String    // Satuan (Kaleng, Zak, Pcs)
-  price         Decimal   @db.Decimal(15, 2) // Harga Satuan
-  totalPrice    Decimal   @db.Decimal(15, 2) // quantity * price
+  unit          String    
+  price         Decimal   @db.Decimal(15, 2)
+  totalPrice    Decimal   @db.Decimal(15, 2)
   
-  // Relasi
   reportItem    ReportItem @relation(fields: [reportItemId], references: [id], onDelete: Cascade)
 }
 
-// Tabel Riwayat Approval (Audit Trail)
 model ApprovalLog {
   id            String    @id @default(uuid())
   reportId      String
-  approverId    String    // User ID BMC
+  approverId    String    
   
-  status        ReportStatus // Status keputusan (APPROVED / REJECTED)
-  notes         String?      // Catatan Alasan NOK jika ditolak
+  status        ReportStatus 
+  notes         String?      
   
-  // Relasi
   report        Report    @relation(fields: [reportId], references: [id])
   approver      User      @relation(fields: [approverId], references: [id])
   

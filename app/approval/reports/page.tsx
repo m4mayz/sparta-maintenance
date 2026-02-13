@@ -46,6 +46,7 @@ import {
     EmptyTitle,
     EmptyDescription,
 } from "@/components/ui/empty";
+import Image from "next/image";
 
 // --- MOCK DATA ---
 const MOCK_APPROVAL_LIST = [
@@ -454,7 +455,7 @@ export default function ApprovalReportsPage() {
                                                                         className="h-24 w-24 shrink-0 rounded-md border bg-muted overflow-hidden relative group"
                                                                     >
                                                                         {/* Simulasi Gambar */}
-                                                                        <img
+                                                                        <Image
                                                                             src={
                                                                                 photo
                                                                             }

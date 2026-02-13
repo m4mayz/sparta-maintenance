@@ -702,7 +702,7 @@ export default function CreateReportPage() {
             setIsSubmitting(false);
             toast.error("Gagal membuat laporan", {
                 description:
-                    "Terjadi kesalahan saat menyimpan laporan. Silakan coba lagi.",
+                    "Terjadi kesalahan saat membuat laporan. Silakan coba lagi.",
             });
         }
     };
@@ -721,7 +721,7 @@ export default function CreateReportPage() {
         <div className="min-h-screen flex flex-col bg-background">
             <LoadingOverlay
                 isOpen={isSubmitting}
-                message="Menyimpan laporan..."
+                message="Membuat laporan..."
             />
 
             <Header

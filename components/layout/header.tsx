@@ -57,9 +57,6 @@ export function Header({
                     className,
                 )}
             >
-                {/* Decoration Pattern (Optional Overlay) */}
-                <div className="absolute inset-0 bg-[url('/assets/grid-pattern.svg')] opacity-10 pointer-events-none" />
-
                 <div className="container mx-auto px-4 md:px-8">
                     <div className="flex h-16 md:h-20 items-center justify-between gap-4">
                         {/* LEFT: Navigation & Title */}
@@ -138,9 +135,6 @@ export function Header({
                 className,
             )}
         >
-            {/* Decoration Pattern */}
-            <div className="absolute inset-0 bg-[url('/assets/grid-pattern.svg')] opacity-10 pointer-events-none" />
-
             <div className="container mx-auto px-4 md:px-8">
                 <div className="flex h-20 md:h-25 items-center justify-center">
                     {/* Centered Logo Container with Glass Effect */}

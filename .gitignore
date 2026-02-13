@@ -20,6 +20,10 @@
 # production
 /build
 
+.agent
+.agents
+.github/skills
+
 # misc
 .DS_Store
 *.pem
