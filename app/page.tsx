@@ -4,8 +4,17 @@ import { BookOpen, LogIn, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
 
-export default function Page() {
+export default async function Page() {
+    // Check if user already logged in
+    const session = await getSession();
+
+    if (session) {
+        redirect("/dashboard");
+    }
+
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Header variant="default" />

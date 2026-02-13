@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -131,52 +131,52 @@ export function Header({
     return (
         <header
             className={cn(
-                "relative w-full overflow-hidden shadow-xl transition-transform duration-300",
-                "bg-linear-to-br from-primary via-primary to-[#9e1b29]",
+                "sticky top-0 z-50 w-full shadow-lg transition-transform duration-300",
+                "bg-linear-to-r from-primary via-primary to-primary/95",
+                "border-b border-white/10",
                 isVisible ? "translate-y-0" : "-translate-y-full",
                 className,
             )}
         >
-            {/* Background Effects */}
-            <div className="absolute inset-0 bg-white/5 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] from-white/10 to-transparent pointer-events-none" />
+            {/* Decoration Pattern */}
+            <div className="absolute inset-0 bg-[url('/assets/grid-pattern.svg')] opacity-10 pointer-events-none" />
 
-            <div className="container mx-auto px-4 py-6 md:py-8 relative z-10">
-                <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-8">
-                    {/* Main Brand */}
-                    <div className="bg-white p-3 md:p-4 rounded-2xl shadow-lg animate-in fade-in zoom-in duration-500">
+            <div className="container mx-auto px-4 md:px-8">
+                <div className="flex h-20 md:h-25 items-center justify-center">
+                    {/* Centered Logo Container with Glass Effect */}
+                    <div className="flex items-center gap-3 md:gap-4 px-4 py-2 md:px-6 md:py-3">
                         <Image
-                            src="/assets/logoalfamart.png"
-                            alt="Alfamart Logo"
-                            width={300}
-                            height={100}
-                            quality={100}
-                            className="h-8 md:h-12 w-auto object-contain"
+                            src="/assets/Alfamart-Emblem.png"
+                            alt="Alfamart"
+                            width={120}
+                            height={120}
+                            className="h-12 md:h-15 w-auto object-contain drop-shadow-md"
                             priority
                         />
-                    </div>
 
-                    {/* Divider (Desktop Only) */}
-                    <div className="hidden md:block h-12 w-0.5 bg-white/20 rounded-full" />
+                        <div className="h-5 md:h-6 w-px bg-white/20 rounded-full" />
 
-                    {/* System Name */}
-                    <div className="flex items-center gap-3 text-white">
-                        <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
-                            <Building2 className="h-6 w-6 md:h-8 md:w-8" />
-                        </div>
-                        <div className="flex flex-col">
-                            <h2 className="text-xl md:text-3xl font-bold tracking-tight drop-shadow-md">
-                                SPARTA
-                            </h2>
-                            <p className="text-xs md:text-sm font-medium text-white/90 tracking-wide uppercase">
-                                System Maintenance Store
-                            </p>
+                        <div className="flex items-center gap-2">
+                            <Image
+                                src="/assets/Building-Logo.png"
+                                alt="SPARTA Logo"
+                                width={60}
+                                height={60}
+                                className="h-7 w-auto md:h-10 object-contain drop-shadow-md"
+                                priority
+                            />
+                            <div className="flex flex-col items-end leading-none text-white">
+                                <span className="font-bold text-base md:text-lg tracking-wider">
+                                    SPARTA
+                                </span>
+                                <span className="text-[10px] md:text-xs opacity-80 font-light">
+                                    Maintenance
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Bottom Accent */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10" />
         </header>
     );
 }

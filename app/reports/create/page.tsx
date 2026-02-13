@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { CameraModal } from "@/components/ui/camera-modal";
+import { LoadingOverlay } from "@/components/ui/loading-overlay";
 import {
     Card,
     CardContent,
@@ -48,6 +49,8 @@ import {
     X,
     Zap,
     Plus,
+    CheckCircle,
+    AlertTriangle,
 } from "lucide-react";
 import {
     checklistCategories,
@@ -61,6 +64,17 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type BmsItemEntry = {
     id: string;
@@ -140,6 +154,12 @@ export default function CreateReportPage() {
 
     // STATE UNTUK PREVIEW FOTO
     const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+
+    // STATE UNTUK KONFIRMASI SUBMIT
+    const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+
+    // STATE UNTUK LOADING SUBMIT
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const toggleCategory = (categoryId: string) => {
         setOpenCategories((prev) => {
@@ -363,6 +383,115 @@ export default function CreateReportPage() {
         toast.success("Form berhasil diisi otomatis!");
     };
 
+    const autoFillSummaryForDevelopment = () => {
+        const sampleItems = [
+            {
+                name: "Cat Tembok",
+                units: ["kaleng", "liter"],
+                priceRange: [50000, 150000],
+            },
+            { name: "Paku", units: ["kg", "pack"], priceRange: [25000, 75000] },
+            {
+                name: "Semen",
+                units: ["sak", "kg"],
+                priceRange: [60000, 100000],
+            },
+            {
+                name: "Pasir",
+                units: ["kubik", "truk"],
+                priceRange: [200000, 500000],
+            },
+            {
+                name: "Papan Kayu",
+                units: ["batang", "lembar"],
+                priceRange: [80000, 200000],
+            },
+            {
+                name: "Gypsum",
+                units: ["lembar", "m2"],
+                priceRange: [40000, 120000],
+            },
+            {
+                name: "Kabel Listrik",
+                units: ["meter", "roll"],
+                priceRange: [15000, 80000],
+            },
+            {
+                name: "Pipa PVC",
+                units: ["batang", "meter"],
+                priceRange: [30000, 100000],
+            },
+            {
+                name: "Keramik",
+                units: ["dus", "m2"],
+                priceRange: [100000, 300000],
+            },
+            { name: "Lem", units: ["kg", "tube"], priceRange: [20000, 60000] },
+        ];
+
+        const newBmsItems = new Map(bmsItems);
+        let itemsAdded = 0;
+
+        for (const [itemId, itemGroup] of newBmsItems) {
+            // Find category for this item
+            let categoryData: ChecklistCategory | undefined;
+            for (const cat of checklistCategories) {
+                if (
+                    cat.items.some((i) => i.id === itemGroup.checklistItem.id)
+                ) {
+                    categoryData = cat;
+                    break;
+                }
+            }
+
+            if (!categoryData) continue;
+
+            // Tambahkan 2-3 entries untuk setiap item rusak BMS
+            const entriesToAdd = Math.floor(Math.random() * 2) + 2; // 2-3 entries
+            const newEntries = [...itemGroup.entries];
+
+            for (let i = 0; i < entriesToAdd; i++) {
+                const sampleItem =
+                    sampleItems[Math.floor(Math.random() * sampleItems.length)];
+                const unit =
+                    sampleItem.units[
+                        Math.floor(Math.random() * sampleItem.units.length)
+                    ];
+                const quantity = Math.floor(Math.random() * 10) + 1; // 1-10
+                const priceBase =
+                    Math.floor(
+                        (Math.random() *
+                            (sampleItem.priceRange[1] -
+                                sampleItem.priceRange[0])) /
+                            10000,
+                    ) *
+                        10000 +
+                    sampleItem.priceRange[0];
+                const price = Math.round(priceBase / 5000) * 5000; // Round to nearest 5000
+
+                newEntries.push({
+                    id: `${itemId}-entry-${Date.now()}-${i}`,
+                    categoryId: categoryData.id,
+                    categoryTitle: categoryData.title,
+                    itemName: sampleItem.name,
+                    quantity: quantity,
+                    unit: unit,
+                    price: price,
+                    total: quantity * price,
+                });
+                itemsAdded++;
+            }
+
+            newBmsItems.set(itemId, {
+                ...itemGroup,
+                entries: newEntries,
+            });
+        }
+
+        setBmsItems(newBmsItems);
+        toast.success(`${itemsAdded} barang berhasil ditambahkan!`);
+    };
+
     const validateStep1 = (): boolean => {
         if (!store.trim()) {
             toast.error("Nama toko wajib diisi");
@@ -550,11 +679,32 @@ export default function CreateReportPage() {
         return true;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!validateStep2()) return;
-        // ... (logika submit sama seperti sebelumnya)
-        toast.success("Laporan berhasil dibuat!");
-        setTimeout(() => router.push("/reports/my-reports"), 1500);
+
+        setIsSubmitting(true);
+        setIsSubmitDialogOpen(false);
+
+        try {
+            // Simulate API call
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            // TODO: Actual API call here
+            // const response = await fetch('/api/reports', {
+            //     method: 'POST',
+            //     body: JSON.stringify(reportData)
+            // });
+
+            toast.success("Laporan berhasil dibuat!");
+            // Keep loading overlay active until navigation completes
+            router.push("/reports/my-reports");
+        } catch {
+            setIsSubmitting(false);
+            toast.error("Gagal membuat laporan", {
+                description:
+                    "Terjadi kesalahan saat menyimpan laporan. Silakan coba lagi.",
+            });
+        }
     };
 
     const rusakItems = Array.from(checklist.values()).filter(
@@ -569,11 +719,16 @@ export default function CreateReportPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
+            <LoadingOverlay
+                isOpen={isSubmitting}
+                message="Menyimpan laporan..."
+            />
+
             <Header
                 variant="dashboard"
                 title={step === 1 ? "Checklist Toko" : "Ringkasan Laporan"}
-                showBackButton
-                backHref={step === 2 ? undefined : "/dashboard"}
+                showBackButton={step === 1}
+                backHref="/dashboard"
             />
 
             {/* MODAL KAMERA FULLSCREEN */}
@@ -645,6 +800,20 @@ export default function CreateReportPage() {
                             size="sm"
                             className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-300"
                             onClick={autoFillForDevelopment}
+                        >
+                            <Zap className="mr-2 h-4 w-4" />
+                            Auto Fill (Dev Only)
+                        </Button>
+                    </div>
+                )}
+                {process.env.NODE_ENV === "development" && step === 2 && (
+                    <div className="mb-4 flex justify-center">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-300"
+                            onClick={autoFillSummaryForDevelopment}
                         >
                             <Zap className="mr-2 h-4 w-4" />
                             Auto Fill (Dev Only)
@@ -1256,6 +1425,7 @@ export default function CreateReportPage() {
                                                                                 {
                                                                                     itemGroup.categoryTitle
                                                                                 }
+
                                                                                 )
                                                                             </span>
                                                                         </div>
@@ -1547,12 +1717,95 @@ export default function CreateReportPage() {
                                 >
                                     Kembali
                                 </Button>
-                                <Button
-                                    className="flex-1"
-                                    onClick={handleSubmit}
+                                <AlertDialog
+                                    open={isSubmitDialogOpen}
+                                    onOpenChange={setIsSubmitDialogOpen}
                                 >
-                                    Submit
-                                </Button>
+                                    <AlertDialogTrigger asChild>
+                                        <Button className="flex-1">
+                                            Submit Laporan
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle className="flex items-center gap-2">
+                                                <AlertTriangle className="h-5 w-5 text-primary" />
+                                                Konfirmasi Submit Laporan
+                                            </AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Apakah Anda yakin ingin submit
+                                                laporan ini?
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <div className="space-y-3">
+                                            <div className="bg-muted p-3 rounded-md space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Toko:
+                                                    </span>
+                                                    <span className="font-medium text-foreground">
+                                                        {store}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Item Rusak:
+                                                    </span>
+                                                    <span className="font-medium text-red-600">
+                                                        {rusakItems.length} item
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Handler BMS:
+                                                    </span>
+                                                    <span className="font-medium text-foreground">
+                                                        {bmsItemsList.length}{" "}
+                                                        item
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-muted-foreground">
+                                                        Handler Rekanan:
+                                                    </span>
+                                                    <span className="font-medium text-foreground">
+                                                        {rekananItems.length}{" "}
+                                                        item
+                                                    </span>
+                                                </div>
+                                                {grandTotalBms > 0 && (
+                                                    <div className="flex justify-between pt-2 border-t">
+                                                        <span className="text-muted-foreground">
+                                                            Total Biaya BMS:
+                                                        </span>
+                                                        <span className="font-bold text-primary">
+                                                            Rp{" "}
+                                                            {grandTotalBms.toLocaleString(
+                                                                "id-ID",
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Setelah submit, laporan akan
+                                                dikirim untuk proses approval.
+                                            </p>
+                                        </div>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>
+                                                Batal
+                                            </AlertDialogCancel>
+                                            <AlertDialogAction
+                                                onClick={handleSubmit}
+                                                className="bg-primary"
+                                            >
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                Ya, Submit
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             </ButtonGroup>
                         </div>
                     </div>

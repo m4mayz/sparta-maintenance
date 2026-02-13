@@ -37,9 +37,7 @@ import {
     Calendar,
     Filter,
     FileText,
-    ChevronRight,
     Clock,
-    CheckCircle2,
     MoreHorizontal,
     ArrowUpDown,
     X,
@@ -214,7 +212,7 @@ export default function MyReportsPage() {
                                         console.log("View detail", report.id)
                                     }
                                 >
-                                    <CardContent className="p-4">
+                                    <CardContent>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
                                                 <h3 className="font-semibold text-sm line-clamp-1">
@@ -227,7 +225,7 @@ export default function MyReportsPage() {
                                             {getStatusBadge(report.status)}
                                         </div>
 
-                                        <div className="grid gap-2 text-sm text-muted-foreground mb-3">
+                                        <div className="grid gap-1 text-sm text-muted-foreground">
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="h-3.5 w-3.5 shrink-0" />
                                                 <span className="truncate">
@@ -237,6 +235,15 @@ export default function MyReportsPage() {
                                             <div className="flex items-center gap-2">
                                                 <Calendar className="h-3.5 w-3.5 shrink-0" />
                                                 <span>{report.date}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                <span>
+                                                    Rp{" "}
+                                                    {report.cost.toLocaleString(
+                                                        "id-ID",
+                                                    )}
+                                                </span>
                                             </div>
                                         </div>
                                     </CardContent>

@@ -135,19 +135,19 @@ export default async function DashboardPage() {
             color: "text-primary",
         },
         {
-            label: "Menunggu",
+            label: "Menunggu Approval",
             value: stats.pendingReports.toString(),
             icon: Clock,
             color: "text-yellow-600",
         },
         {
-            label: "Disetujui",
+            label: "Laporan Disetujui",
             value: stats.approvedReports.toString(),
             icon: CheckCircle2,
             color: "text-green-600",
         },
         {
-            label: "Ditolak",
+            label: "Laporan Ditolak",
             value: stats.rejectedReports.toString(),
             icon: AlertCircle,
             color: "text-red-600",
@@ -310,7 +310,7 @@ export default async function DashboardPage() {
 
                         <Card className="h-fit">
                             <CardContent className="p-0">
-                                <div className="p-6 flex flex-col items-center justify-center text-center space-y-3 min-h-[200px]">
+                                <div className="p-6 flex flex-col items-center justify-center text-center space-y-3 min-h-50">
                                     <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
                                         <Activity className="h-6 w-6 text-muted-foreground" />
                                     </div>
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
                                         <h3 className="font-medium">
                                             Belum ada aktivitas
                                         </h3>
-                                        <p className="text-sm text-muted-foreground max-w-[200px]">
+                                        <p className="text-sm text-muted-foreground max-w-50">
                                             Laporan dan aktivitas terbaru Anda
                                             akan muncul di sini.
                                         </p>
