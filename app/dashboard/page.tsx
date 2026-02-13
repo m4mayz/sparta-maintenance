@@ -45,14 +45,14 @@ export default async function DashboardPage() {
                             description:
                                 "Lihat semua laporan yang sudah dibuat",
                             icon: FileText,
-                            href: "/reports/my-reports",
+                            href: "/reports",
                             variant: "outline" as const,
                         },
                         {
                             title: "Riwayat",
                             description: "Riwayat laporan yang sudah selesai",
                             icon: FileClock,
-                            href: "/reports/history",
+                            href: "/reports/finished",
                             variant: "outline" as const,
                         },
                     ],

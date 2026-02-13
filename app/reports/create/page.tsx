@@ -697,7 +697,7 @@ export default function CreateReportPage() {
 
             toast.success("Laporan berhasil dibuat!");
             // Keep loading overlay active until navigation completes
-            router.push("/reports/my-reports");
+            router.push("/reports");
         } catch {
             setIsSubmitting(false);
             toast.error("Gagal membuat laporan", {

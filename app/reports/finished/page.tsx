@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,36 +31,20 @@ import {
 } from "@/components/ui/empty";
 import {
     Search,
-    Plus,
     MapPin,
     Calendar,
     Filter,
     FileText,
     Clock,
-    MoreHorizontal,
     ArrowUpDown,
-    X,
     Check,
+    CheckCircle2,
+    Eye,
 } from "lucide-react";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
-// Mock Data
+// Mock Data — hanya laporan yang sudah selesai (approved & completed)
 const MOCK_REPORTS = [
-    {
-        id: "RPT-2024-001",
-        store: "Alfamart Cikokol Raya",
-        location: "Area Kasir",
-        description: "Lampu utama kedip-kedip dan mati nyala",
-        status: "pending",
-        date: "2024-02-10",
-        cost: 150000,
-    },
     {
         id: "RPT-2024-002",
         store: "Alfamart Hasyim Ashari",
@@ -72,27 +55,35 @@ const MOCK_REPORTS = [
         cost: 350000,
     },
     {
-        id: "RPT-2024-003",
-        store: "Alfamart Modernland",
-        location: "Area Sales",
-        description: "AC tidak dingin, hanya keluar angin",
-        status: "rejected",
-        date: "2024-02-08",
-        cost: 750000,
+        id: "RPT-2024-005",
+        store: "Alfamart Serpong Utara",
+        location: "Ruang Atas Lt.2",
+        description: "Plafond bocor saat hujan deras",
+        status: "completed",
+        date: "2024-02-06",
+        cost: 1200000,
     },
     {
-        id: "RPT-2024-004",
-        store: "Alfamart Sudirman",
-        location: "Pintu Masuk",
-        description: "Engsel pintu kaca lepas",
-        status: "pending",
-        date: "2024-02-07",
-        cost: 200000,
+        id: "RPT-2024-007",
+        store: "Alfamart Kelapa Dua",
+        location: "Bagian Atap",
+        description: "Genteng pecah di beberapa titik",
+        status: "approved",
+        date: "2024-02-04",
+        cost: 500000,
+    },
+    {
+        id: "RPT-2024-009",
+        store: "Alfamart Alam Sutera",
+        location: "Area Sales",
+        description: "Lantai keramik retak dan terangkat",
+        status: "completed",
+        date: "2024-01-28",
+        cost: 850000,
     },
 ];
 
-export default function MyReportsPage() {
-    const router = useRouter();
+export default function FinishedReportsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
@@ -109,15 +100,6 @@ export default function MyReportsPage() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case "pending":
-                return (
-                    <Badge
-                        variant="secondary"
-                        className="gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-100/80 border-yellow-200 shadow-none"
-                    >
-                        <Clock className="h-3 w-3" /> Menunggu persetujuan
-                    </Badge>
-                );
             case "approved":
                 return (
                     <Badge
@@ -127,13 +109,13 @@ export default function MyReportsPage() {
                         <Check className="h-3 w-3" /> Disetujui
                     </Badge>
                 );
-            case "rejected":
+            case "completed":
                 return (
                     <Badge
                         variant="secondary"
-                        className="gap-1 bg-red-100 text-red-700 hover:bg-red-100/80 border-red-200 shadow-none"
+                        className="gap-1 bg-blue-100 text-blue-700 hover:bg-blue-100/80 border-blue-200 shadow-none"
                     >
-                        <X className="h-3 w-3" /> Ditolak
+                        <CheckCircle2 className="h-3 w-3" /> Selesai
                     </Badge>
                 );
             default:
@@ -145,15 +127,14 @@ export default function MyReportsPage() {
         <div className="min-h-screen flex flex-col bg-background">
             <Header
                 variant="dashboard"
-                title="Laporan Saya"
-                description="Kelola dan pantau status laporan kerusakan"
+                title="Laporan Selesai"
+                description="Riwayat laporan yang sudah disetujui dan selesai"
                 showBackButton
                 backHref="/dashboard"
             />
 
-            {/* Container diperlebar ke max-w-6xl untuk mengakomodasi Table Desktop */}
             <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl space-y-6">
-                {/* Action Bar: Search, Filter, Create */}
+                {/* Action Bar: Search, Filter */}
                 <div className="flex flex-col md:flex-row gap-4 md:items-center justify-between">
                     <div className="flex flex-1 gap-2">
                         <div className="relative flex-1 md:max-w-sm">
@@ -177,41 +158,23 @@ export default function MyReportsPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Semua</SelectItem>
-                                <SelectItem value="pending">
-                                    Menunggu Persetujuan
-                                </SelectItem>
                                 <SelectItem value="approved">
                                     Disetujui
                                 </SelectItem>
-                                <SelectItem value="rejected">
-                                    Ditolak
+                                <SelectItem value="completed">
+                                    Selesai
                                 </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-
-                    <Button
-                        onClick={() => router.push("/reports/create")}
-                        className="w-full md:w-auto gap-2 shadow-sm"
-                    >
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden md:inline">Buat Laporan</span>
-                        <span className="md:hidden">Laporan Baru</span>
-                    </Button>
                 </div>
 
                 {filteredReports.length > 0 ? (
                     <>
-                        {/* --- MOBILE VIEW: CARD LIST (Visible on small screens) --- */}
+                        {/* --- MOBILE VIEW: CARD LIST --- */}
                         <div className="space-y-3 md:hidden">
                             {filteredReports.map((report) => (
-                                <Card
-                                    key={report.id}
-                                    className="cursor-pointer hover:border-primary/50 transition-all active:scale-[0.99] shadow-sm"
-                                    onClick={() =>
-                                        console.log("View detail", report.id)
-                                    }
-                                >
+                                <Card key={report.id} className="shadow-sm">
                                     <CardContent>
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
@@ -246,12 +209,29 @@ export default function MyReportsPage() {
                                                 </span>
                                             </div>
                                         </div>
+
+                                        {/* Mobile Action Button */}
+                                        <div className="mt-3 pt-3 border-t flex justify-end">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="gap-1.5 text-xs"
+                                                asChild
+                                            >
+                                                <Link
+                                                    href={`/reports/${report.id}`}
+                                                >
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                    Lihat Detail
+                                                </Link>
+                                            </Button>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             ))}
                         </div>
 
-                        {/* --- DESKTOP VIEW: DATA TABLE (Visible on medium+ screens) --- */}
+                        {/* --- DESKTOP VIEW: DATA TABLE --- */}
                         <div className="hidden md:block border rounded-lg shadow-sm bg-card">
                             <Table>
                                 <TableHeader>
@@ -272,20 +252,16 @@ export default function MyReportsPage() {
                                         <TableHead className="text-right">
                                             Estimasi
                                         </TableHead>
-                                        <TableHead className="w-[50px]"></TableHead>
+                                        <TableHead className="w-[70px] text-center">
+                                            Aksi
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredReports.map((report) => (
                                         <TableRow
                                             key={report.id}
-                                            className="cursor-pointer group"
-                                            onClick={() =>
-                                                console.log(
-                                                    "View detail",
-                                                    report.id,
-                                                )
-                                            }
+                                            className="group"
                                         >
                                             <TableCell className="font-mono text-xs font-medium text-muted-foreground">
                                                 {report.id}
@@ -313,48 +289,22 @@ export default function MyReportsPage() {
                                                     "id-ID",
                                                 )}
                                             </TableCell>
-                                            <TableCell>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
+                                            <TableCell className="text-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={`/reports/${report.id}`}
                                                     >
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                            <span className="sr-only">
-                                                                Menu
-                                                            </span>
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuLabel>
-                                                            Aksi
-                                                        </DropdownMenuLabel>
-                                                        <DropdownMenuItem
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                console.log(
-                                                                    "Edit",
-                                                                );
-                                                            }}
-                                                        >
-                                                            Edit Laporan
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                console.log(
-                                                                    "History",
-                                                                );
-                                                            }}
-                                                        >
-                                                            Lihat Riwayat
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                        <Eye className="h-4 w-4" />
+                                                        <span className="sr-only">
+                                                            Lihat Detail
+                                                        </span>
+                                                    </Link>
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -363,7 +313,7 @@ export default function MyReportsPage() {
                         </div>
                     </>
                 ) : (
-                    /* Empty State - Responsive Container */
+                    /* Empty State */
                     <div className="bg-card border rounded-lg border-dashed">
                         <Empty className="py-16">
                             <EmptyHeader>
@@ -376,19 +326,8 @@ export default function MyReportsPage() {
                                 <EmptyDescription>
                                     {searchQuery
                                         ? "Coba ubah kata kunci pencarian atau filter Anda."
-                                        : "Anda belum membuat laporan kerusakan apapun."}
+                                        : "Belum ada laporan yang selesai."}
                                 </EmptyDescription>
-                                {!searchQuery && (
-                                    <div className="pt-4">
-                                        <Button
-                                            onClick={() =>
-                                                router.push("/reports/create")
-                                            }
-                                        >
-                                            Buat Laporan Sekarang
-                                        </Button>
-                                    </div>
-                                )}
                             </EmptyHeader>
                         </Empty>
                     </div>
